@@ -1817,6 +1817,9 @@ public class AuthConstant {
 
 ### Test Case Review ~ 单元测试 
 
+- Repository单元测试：xyz.staffjoy.account.repo.AccountRepoTest
+- Controller单元测试：xyz.staffjoy.company.controller.ut.CompanyControllerUnitTest
+
 ![1608025760127](MicroserviceSpringBootStaffjoy.assets/1608025760127.png)
 
 
@@ -1825,7 +1828,11 @@ public class AuthConstant {
 
 #### 集成测试(Integration Test) 
 
+- 集成测试 Account ：xyz.staffjoy.account.controller.AccountControllerTest
+
 ![1608025778551](MicroserviceSpringBootStaffjoy.assets/1608025778551.png)
+
+
 
 #### Staffjoy架构图 
 
@@ -1838,6 +1845,8 @@ public class AuthConstant {
 ### Test Case Review ~ 组件测试 
 
 #### 组件测试(Component Test) ~ 内部Mock 
+
+- 组件测试 WWW服务的登录注销：xyz.staffjoy.web.controller.LoginControllerTest
 
 ![1608025802166](MicroserviceSpringBootStaffjoy.assets/1608025802166.png)
 
@@ -1853,12 +1862,13 @@ public class AuthConstant {
 
 #### 测试补充 
 
-1. Mock vs. Spy
-2. BDD行为驱动测试(了解)
-3. 性能测试 
-
-1. [JMeter](https://jmeter.apache.org)
-2. [Gatling](https://martinfowler.com/articles/microservice-testing/)
+1. Mock vs. Spy （Mock针对接口；Spy针对类的场景，是没有接口的场景，进行部分mock）
+   1. Mock and Spy 测试示例：
+   2. xyz.staffjoy.account.service.helper.ServiceHelperTest
+2. BDD行为驱动测试(了解，国内不流行)
+3. 性能测试 （吞吐量，并发量，延迟）
+   1. [JMeter](https://jmeter.apache.org)
+   2. [Gatling](https://martinfowler.com/articles/microservice-testing/)
 
 ![1608027813457](MicroserviceSpringBootStaffjoy.assets/1608027813457.png)
 
