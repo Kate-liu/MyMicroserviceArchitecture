@@ -2429,10 +2429,11 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 • staffjoy_company
 3. 部署 Staffjoy
 • docker-compose up
-• docker-compose psStep By Step4. 启用 SwitchHosts
+• docker-compose ps
+4.  启用 SwitchHosts
 5. 校验 Staffjoy
 6. 清理
-• docker-compose down 
+  • docker-compose down 
 
 
 
@@ -2442,11 +2443,11 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 
 - https://hub.docker.com/u/boboweike
 - docker pull boboweike/spring2go-petclinic
-- 
+- ...
 
 
 
-
+## 云原生架构和 Kubernetes 容器云部署 
 
 
 
