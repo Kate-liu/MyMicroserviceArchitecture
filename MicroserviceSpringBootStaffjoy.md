@@ -1897,109 +1897,194 @@ public class AuthConstant {
 
 ## 可运维架构 设计和实践 
 
+### 何谓生产就绪Production Ready？ 
 
+#### 经典软件工程阶段 
 
+- 需求分析
+- 架构设计
+- 实现测试
+- 部署运维
 
 
 
+#### 互联网软件交付阶段 
 
+- 编码完成
+- 生产就绪
+- 价值交付
 
 
 
+#### 何谓生产就绪 
 
+- 功能测试OK
+- 性能测试OK
+- 配置管理
+- 日志监控
+- Metrics监控
+- 健康检查
+- 调用链监控
+- 安全性考量
+- 扩展升级考量
+- 高可用考量
 
+![1608034067062](MicroserviceSpringBootStaffjoy.assets/1608034067062.png)
 
 
 
+### SpringBoot如何实现分环境配置？ 
 
+#### Staffjoy环境 
 
+- spring 的 profiles机制，分环境，并且可以重载
+- DEV：intellJ
+- TEST：docker  compose
+- UAT & PROD：kubernetes
 
+![1608034789924](MicroserviceSpringBootStaffjoy.assets/1608034789924.png)
 
 
 
+### Apollo vs Spring Cloud Config vs K8s ConfigMap 
 
+#### 何谓动态配置更新 
 
+- 动态配置更新 = 配置中心更新最新的配置到应用 + 应用自己实现配置更新监控，动态加载
 
+![1608035675497](MicroserviceSpringBootStaffjoy.assets/1608035675497.png)
 
 
 
+#### Apollo vs Spring Cloud Config vs K8s ConfigMap 
 
+|                | Apollo                     | Spring Cloud Config | K8s ConfigMaps     |
+| -------------- | -------------------------- | ------------------- | ------------------ |
+| 配置界面       | 统一界面管理不同环境和集群 | 无，通过git操作     | Cli或Dashboard     |
+| 配置存储       | DB                         | Git                 | Etcd               |
+| 配置生效时间   | 实时推送+应用配合          | 近实时+应用配合     | 近实时+应用配合    |
+| 动态配置       | 支持，实时推送             | 复杂+Mq             | 支持发布更新       |
+| 版本管理       | UI支持发布历史和回滚       | 无，通过git操作     | 无，需自己管理     |
+| 灰度发布       | 支持                       | 不支持              | 支持灰度发布       |
+| 授权/审计/审核 | UI操作，修改和发布权限分离 | 需通过git仓库设置   | K8s平台部分支持    |
+| 实例配置监控   | 可见哪些客户端配置生效     | 不支持              | 可查询容器环境变量 |
+| 客户端支持     | 原生Java/.Net，提供API，支 | Spring应用+标注支持 | 语言无关           |
 
 
 
 
+#### 参考样例 
 
+Apollo动态配置：https://github.com/ctripcorp/apollo-use-cases
 
+SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/config
 
 
 
+### CAT vs Zipkin vs Skywalking 
 
+#### 演进历史 
 
+-  源头一：eBay
+- 源头二：CAT
 
+![1608037231050](MicroserviceSpringBootStaffjoy.assets/1608037231050.png)
 
 
 
+#### CAT vs Zipkin vs Skywalking 
 
+|              | CAT                                  | Zipkin                                           | Apache Skywalking               |
+| ------------ | ------------------------------------ | ------------------------------------------------ | ------------------------------- |
+| 调用链可视化 | 有                                   | 有                                               | 有                              |
+| 聚合报表     | 非常丰富                             | 少                                               | 较丰富                          |
+| 服务依赖图   | 简单                                 | 简单                                             | 好                              |
+| 埋点方式     | 侵入                                 | 侵入                                             | 非侵入，运行期字节码增强        |
+| VM指标监控   | 好                                   | 无                                               | 有                              |
+| 告警支持     | 有                                   | 无                                               | 有                              |
+| 多语言支持   | Java/.Net                            | 丰富                                             | Java/.Net/NodeJS/PHP自动 Go手动 |
+| 存储机制     | Mysql(报表)，本地文件/ HDFS（调用链) | 可选in memory, mysql, ES(生 产), Cassandra(生产) | H2, ES(生产)                    |
+| 社区支持     | 主要在国内，点评/美团       | 文档丰富，国外主流               | Apache支持，国内社区好            |
+| 国内案例                                  | 点评、携程、陆金所、拍 拍贷 | 京东、阿里定制不开源             | 华为，小米，当当，微众银行        |
+| APM（application performance management） | Yes                         | No                               | Yes                               |
+| 祖先源头                                  | eBay CAL                    | Google Dapper                    | Google Dapper                     |
+| 同类产品                                  | 暂无                        | Uber Jaeger, Spring Cloud Sleuth | Naver Pinpoint                    |
+| Github Stars(2019.6)                      | 9.6k                        | 11.2k                            | 9.2k                              |
+| 亮点                                      | 企业生产级，报表丰富        | 社区社区生态好                   | 非侵入，Apache背书                |
+| 不足                                      | 用户体验一般，社区一般      | APM报表能力弱                    | 时间不长，文档一般，仅限中文 社区 |
 
 
 
+#### Skywalking Java Agent支持库 
 
+- https://github.com/apache/skywalking/blob/master/docs/en/setup/service-agent/java-agent/Supported-list.md
 
+![1608038076107](MicroserviceSpringBootStaffjoy.assets/1608038076107.png)
 
 
 
+#### Staffjoy依赖监控 
 
+![1606545686973](MicroserviceSpringBootStaffjoy.assets/1606545686973.png)
 
 
 
+### 结构化日志和审计日志 
 
+- Structured logging：https://github.com/jacek99/structlog4j
+- 结构化和业务审计日志样例：
+  - xyz.staffjoy.account.service.AccountService
+  - xyz.staffjoy.common.auditlog.LogEntry
+  - 配置初始化，环境和服务信息日志，到所有的结构化日志，xyz.staffjoy.common.config.StaffjoyConfig
 
+![1608039282830](MicroserviceSpringBootStaffjoy.assets/1608039282830.png)
 
 
 
+### 集中异常监控和Sentry 
 
+- https://sentry.io/
+- https://github.com/getsentry/sentry
+- 创建用户，自定义，就可以量小，使用sentry的云服务
+- Sentry 主要是进行异常的集中监控，开源的产品；日志的记录，可以使用 ELK完成
+- Staffjoy项目中：
+- 创建Sentry的Spring Bean：xyz.staffjoy.common.config.StaffjoyConfig#sentryClient
+- 做一个aop的拦截，只在生产环境启动 sentry服务：xyz.staffjoy.common.aop.SentryClientAspect
+- 生产环境中，有异常和错误的时候，将信息上报到 Sentry：xyz.staffjoy.account.service.helper.ServiceHelper
+  - xyz.staffjoy.account.service.helper.ServiceHelper#handleError
+  - xyz.staffjoy.account.service.helper.ServiceHelper#handleException
 
 
 
+### EFK & Prometheus & Skywalking K8s 集成架构 
 
+#### EFK + K8s 
 
+- fluentd
+- Log Parser  可以自定义开发，进行日志的解析，和日志的个性化过滤
+- Elastic
 
+![1608042563504](MicroserviceSpringBootStaffjoy.assets/1608042563504.png)
 
 
 
+#### Prometheus+ K8s 
 
+- Prometheus 与 K8S 的 Discovery集成，去Docker中抓取日志信息
 
+![1608042664789](MicroserviceSpringBootStaffjoy.assets/1608042664789.png)
 
 
 
+#### SkyWalking + K8s 
 
+- 使用 SkyWalking  的 Agent，进行字节码注入，自动埋点与探测，收集日志
 
+![1608042742061](MicroserviceSpringBootStaffjoy.assets/1608042742061.png)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 服务容器化和 Docker Compose 部署 
 
 
 
