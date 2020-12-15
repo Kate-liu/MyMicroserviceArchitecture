@@ -2186,6 +2186,9 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
   - sentry-dsn，是集中日志监控，需要保证格式一样，也可以用自己的
   - signing-secret，是JAT令牌的签名，需要配置
   - 后面其他的配置，是使用阿里云的短信服务和邮件服务配置
+  - 阿里云 access：
+    - aliyun-access-key: LTAI4FzQtkuKAZVCG7hZV2
+    - Axaliyun-access-secret: GHV9rWL2GMNfhFhw5i5QWR07zjwfNv
 - Faraday配置Review
   - faraday 网关配置：faraday/src/main/resources/application-dev.yml
   - mappings 中展示的是 路由表，不同的 host 对应 不同的 IP
@@ -2206,6 +2209,17 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 - npm install 
 - npm start
 - win 启动失败，没法进行测试中的 管理员 后台登录，以及排班等
+  - https://github.com/spring2go/staffjoy/issues/6
+  - 将npm-zepto替换为zepto-webpack
+  - npm install zepto-webpack
+- mac:  
+  - brew install npm
+  - npm install -g cnpm --registry=https://registry.npm.taobao.org
+  - cnpm -v
+  - cnpm install -g nrm
+  - nrm ls
+  - nrm use taobao
+  - https://blog.csdn.net/qq_24672657/article/details/86775719
 
 
 
@@ -2262,89 +2276,173 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 
 
 
+### Docker 和 Docker Compose 简介 
 
+#### 容器用途
 
+1. 标准化打包
+2. 隔离
+3. 标准化部署 
 
 
 
+#### OS & Kernel 
 
+- 用户态
+- 内核态
+- 硬件
 
+![1608058737773](MicroserviceSpringBootStaffjoy.assets/1608058737773.png)
 
 
 
+#### 虚拟机和容器 
 
+- Hypervisor vs Container Engine
 
+![1608058787056](MicroserviceSpringBootStaffjoy.assets/1608058787056.png)
 
 
 
+#### Docker 容器核心技术 
 
+- CGroups：管理硬件
+- Namespaces：管理进程
+- Networking：网络层
+- Storage：存储的文件系统
 
+![1608058889529](MicroserviceSpringBootStaffjoy.assets/1608058889529.png)
 
 
 
+#### 容器镜像 
 
+- 不同的容器镜像，可以共用一个层，使用哈希值标识
 
+![1608058933959](MicroserviceSpringBootStaffjoy.assets/1608058933959.png)
 
 
 
+#### Docker 架构 
 
+- Client，执行命令行
+- HOST，Daemon线程，Images
+- Registry，仓库
+- https://docs.docker.com/get-started/overview/
 
+![1608059032904](MicroserviceSpringBootStaffjoy.assets/1608059032904.png)
 
 
 
+#### Docker Compose 
 
+- docker 只能部署一个 单镜像
+- docker compose，可以一键部署多个镜像，使用 up 命令
+- 配置 docker-compose.yml 文件
 
+![1608059173563](MicroserviceSpringBootStaffjoy.assets/1608059173563.png)
 
 
 
+### 容器镜像构建 Dockerfile 解析 
 
+#### Account 服务 Dockerfile 
 
+- account-svc/Dockerfile
 
+- ```dockerfile
+  FROM java:8-jdk-alpine
+  
+  COPY ./target/account-svc-1.0.0.jar /usr/app/
+  
+  WORKDIR /usr/app
+  
+  RUN sh -c 'touch account-svc-1.0.0.jar'
+  
+  ENTRYPOINT ["java", "-jar", "account-svc-1.0.0.jar"]
+  ```
 
+#### MyAccount 单页应用 Dockerfile 
 
+- 两阶段构建技术：先生成镜像文件，后进行Nginx的启动
 
+- frontend/myaccount/Dockerfile
 
+- ```dockerfile
+  FROM node:alpine as builder
+  WORKDIR '/build'
+  COPY myaccount ./myaccount
+  COPY resources ./resources
+  COPY third_party ./third_party
+  
+  WORKDIR '/build/myaccount'
+  
+  RUN npm install
+  RUN npm rebuild node-sass
+  RUN npm run build
+  
+  RUN ls /build/myaccount/dist
+  
+  FROM nginx
+  EXPOSE 80
+  COPY --from=builder /build/myaccount/dist /usr/share/nginx/html
+  ```
 
 
 
+### Docker Compose 部署文件解析 
 
+#### Docker Compose 部署架构 
 
+![1608062279289](MicroserviceSpringBootStaffjoy.assets/1608062279289.png)
 
+- 内部有自己的网络，保证全部使用 80 端口，都不会冲突
+- 本地 docker compose 配置文件：.env
+  - 设置内部访问 路由
+  - 设置 阿里云 access
+- docker-compose.yml
+  - 设置 services 和 networks
+  - services 内部设置各种 service，设置环境变量，镜像名字等信息
 
 
 
+### 将 Staffjoy 部署到本地 Docker Compose 环境 
 
+#### Docker Desktop for Mac/Win 安装
 
+- https://docs.docker.com/docker-for-mac/install/
+- https://docs.docker.com/docker-for-windows/install/
 
+![1608062762459](MicroserviceSpringBootStaffjoy.assets/1608062762459.png)
 
 
 
+#### 构建和部署
 
+1. 镜像构建
+   • mvn clean package -DskipTests
+   • docker-compose build（失败了，一直报错，无法解决啊！）
+   • docker images
 
+2. 部署 MySQL 数据库
+• staffjoy_account
+• staffjoy_company
+3. 部署 Staffjoy
+• docker-compose up
+• docker-compose psStep By Step4. 启用 SwitchHosts
+5. 校验 Staffjoy
+6. 清理
+• docker-compose down 
 
 
 
 
 
+#### 拉取docker上的镜像
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- https://hub.docker.com/u/boboweike
+- docker pull boboweike/spring2go-petclinic
+- 
 
 
 
