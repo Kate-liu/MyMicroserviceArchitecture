@@ -2084,17 +2084,41 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 
 
 
+### 参考链接 
+
+1. [Apollo动态配置](https://github.com/ctripcorp/apollo-use-cases)
+2. [SpringCloud集中配置](https://github.com/sqshq/piggymetrics/tree/master/config)
+3. [Skywalking Java Agent支持库](https://github.com/apache/skywalking/blob/master/docs/en/setup/service-agent/java-agent/Supported-list.md)
+4. [structlog4j](https://github.com/jacek99/structlog4j)
+5. [Sentry.io](https://sentry.io)
+6. [Sentry Open Source](https://github.com/getsentry/sentry)
+
+
+
+
+
 ## 服务容器化和 Docker Compose 部署 
 
+### 本地开发部署架构和需求 
+
+#### 本地 IDE部署架构 
+
+- 端口与应用
+
+![1608043855234](MicroserviceSpringBootStaffjoy.assets/1608043855234.png)
 
 
 
+#### 软件需求 
 
-
-
-
-
-
+1. SwitchHosts
+• https://github.com/oldj/SwitchHosts
+2. SkyWalking(6.1.0)
+• https://github.com/apache/skywalking/releases
+• https://github.com/apache/skywalking/blob/master/docs/en/setup/serviceagent/java-agent/README.md
+3. MySQL(5.7.25) + Workbench
+• https://dev.mysql.com/downloads/mysql/
+4. 阿里云邮箱账户(可选) 
 
 
 
