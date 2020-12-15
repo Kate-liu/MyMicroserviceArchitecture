@@ -829,7 +829,7 @@ OAuth 2.0 Cookbook：https://www.packtpub.com/virtualization-and-cloud/oauth-20-
 ##### JSON Web Token(JWT) 
 
 - 网址：https://jwt.io/
-- 三部分组成：Header.Claims.Signature
+- 三部分组成：Header.Claims（Payload）.Signature
 
 ![1605673102336](MicroserviceArchitecture.assets/1605673102336.png)
 

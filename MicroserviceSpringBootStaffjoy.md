@@ -1031,315 +1031,768 @@ DMO：数据实体对象，业务对象，对接数据库
 
 #### MyStore Auth V1 ~ 认证阶段 
 
+- 单块架构，使用 cookie + session机制，实现用户认证与有状态会话
+- 业务量大了，就会出现系统访问慢，不可用
 
+![1608005010822](MicroserviceSpringBootStaffjoy.assets/1608005010822.png)
 
 #### MyStore Auth V1 ~ 访问阶段 
+
+- 浏览器，只需要携带本地存储的 cookie 就可以去服务器鉴权，得到session
+- 进行后续的请求
+
+![1608005136156](MicroserviceSpringBootStaffjoy.assets/1608005136156.png)
 
 
 
 #### Auth V1.1 ~ Sticky Session 
 
+- 业务的发展，使用多态服务器部署
+- 会存在用户每一次请求的处理服务器不是同一台，那么就会出现登录中断的状态
+- 此时就需要，使用粘性会话保证
+- 将某一个用户的请求绑定到一台机器上
+- 用户量大量，会出现问题，某一个服务器宕机了，使得整个使用本服务器的用户都会登录中断
+
+![1608005192226](MicroserviceSpringBootStaffjoy.assets/1608005192226.png)
+
 
 
 #### Auth V1.5 ~ Centralized Session 
 
+- 将所有的用户请求 session 进行集中式存储
+- 使用redis存储所有会话，保证请求有状态
 
+![1608005295732](MicroserviceSpringBootStaffjoy.assets/1608005295732.png)
 
 
 
+### 网站安全认证架构演进～微服务阶段 
 
+#### 微服务认证授权挑战 
 
+- 业务发展，已经已经不只是 Web MVC，还有手机端，H5页面等技术
+- 需要进行微服务改造
 
+![1608006268912](MicroserviceSpringBootStaffjoy.assets/1608006268912.png)
 
 
 
+#### Auth 3.0 ~ Auth Service + Token 
 
+- 将用户认证，鉴权，统一抽出来一个 Auth Service
+- 下发一个无意义的 token 字符串，种到 客户端的 根域 下，可以使用 cookie 或者 HTTP header的方式携带 token ，进行请求与鉴权
+- 这种方式存在的问题是，用户的鉴权逻辑与业务逻辑耦合，不方便规范
 
+![1608006288461](MicroserviceSpringBootStaffjoy.assets/1608006288461.png)
 
 
 
+#### Auth 3.5 ~ Token + Gateway 
 
+- 进一步发展，使用微服务网关，进行用户鉴权与请求过滤
+- 解决了鉴权与业务逻辑耦合的问题
 
+![1608006399743](MicroserviceSpringBootStaffjoy.assets/1608006399743.png)
 
 
 
+### 基于JWT令牌的安全认证架构 
 
+#### Auth 3.6 ~ JWT + Gateway 
 
+- 对系统进行解耦，更加轻量化微服务系统
+- 请求鉴权之后，发布一个JWT的令牌
+- 后续只需要网关进行鉴权，认证即可
+- JWT令牌属于有状态，有内容的字符串，应用与对安全性要求不严格的场景下，但是其中的签名只有自己知道，所以安全性还可以
 
+![1608018533453](MicroserviceSpringBootStaffjoy.assets/1608018533453.png)
 
 
 
+### JWT令牌原理 
 
+#### JWT令牌结构 
 
+JSON Web Token(JWT) 
 
+- 网址：https://jwt.io/
+- 三部分组成：Header.Claims（Payload）.Signature
 
 
 
 
 
+#### JWT令牌示例 
 
+![1605673102336](MicroserviceArchitecture.assets/1605673102336.png)
 
+![1605673114533](MicroserviceArchitecture.assets/1605673114533.png)
 
 
 
 
 
+#### JWT令牌类比签名支票 
 
+![1605673146776](MicroserviceArchitecture.assets/1605673146776.png)
 
 
 
 
 
+### 两种 JWT 流程 
 
+#### HMAC 流程 
 
+- Auth server 与 Resource server之间 协商一个secret key，
+- 这种保存 秘钥的方式，安全隐患大
 
+![1608019421912](MicroserviceSpringBootStaffjoy.assets/1608019421912.png)
 
 
 
+#### RSA 流程 
 
+- 基于 公私钥的方式实现 秘钥的保存
+- 安全性更好
+- 一般私钥的泄漏可能性更小
 
+![1608019495968](MicroserviceSpringBootStaffjoy.assets/1608019495968.png)
 
 
 
+#### JWT 优劣 
 
+优势：
 
+- 紧凑轻量，包含了用户的信息
+- 对 Auth Server 的压力小，不需要进行二次鉴权
+- 简化 Auth Server 的实现，不需要二次鉴权的逻辑
 
+不足：
 
+- 无状态和吊销无法两全，由于taken存在信息，所以一般的吊销时间需要等到自然时间后，令牌自动过期，更新信息，也需要老的令牌自动过期
+- 传输开销，如果令牌中 Claims（Payload）较大的时候，会出现更大的传输压力
 
 
 
+### Staffjoy 安全认证架构和 SSO 
 
+#### Staffjoy Auth ~ 登录认证阶段 
 
+- 通过WWW服务，进行用户的登录认证
+- 将JWT种在用户根域的cookie 中
 
+![1608020329294](MicroserviceSpringBootStaffjoy.assets/1608020329294.png)
 
 
 
+#### Staffjoy JWT Cookie 
 
+- 在用户浏览器，可以看到JWT令牌，在根域下，有过期时间
 
+![1608020443999](MicroserviceSpringBootStaffjoy.assets/1608020443999.png)
 
 
 
+#### Staffjoy Auth ~ 后续访问阶段 
 
+- 用户请求访问的时候，携带含有JWT的cookie，进入到网关，
+- 网关进行鉴权，提取出用户的userid，传输到请求处理逻辑中
+- 只要JWT一直存在，就会一直执行请求，当清除用户本地的jwt后，就需要重新登录认证
 
+![1608020592439](MicroserviceSpringBootStaffjoy.assets/1608020592439.png)
 
 
 
+### 安全认证代码剖析～用户认证 
 
+#### 引入JWT生成和校验库 
 
+```xml
+<dependency>
+    <groupId>com.auth0</groupId>
+    <artifactId>java-jwt</artifactId>
+    <version>3.6.0</version>
+</dependency>
+```
 
 
 
+#### JWT生成算法(common/sign) 
 
+xyz.staffjoy.common.crypto.Sign
 
+```java
+public class Sign {
+    public static String generateSessionToken(String userId, String signingToken, boolean support, long duration) {
+        if (StringUtils.isEmpty(signingToken)) {
+            throw new ServiceException("No signing token present");
+        }
+        Algorithm algorithm = getAlgorithm(signingToken);
+        String token = JWT.create()
+            .withClaim(CLAIM_USER_ID, userId)
+            .withClaim(CLAIM_SUPPORT, support)
+            .withExpiresAt(new Date(System.currentTimeMillis() + duration))
+            .sign(algorithm);
+        return token;
+    }
 
 
+    private static Algorithm getAlgorithm(String signingToken) {
+        Algorithm algorithm = algorithmMap.get(signingToken);
+        if (algorithm == null) {
+            synchronized (algorithmMap) {
+                algorithm = algorithmMap.get(signingToken);
+                if (algorithm == null) {
+                    algorithm = Algorithm.HMAC512(signingToken);
+                    algorithmMap.put(signingToken, algorithm);
+                }
+            }
+        }
+        return algorithm;
+    }
+}    
+```
 
 
 
+#### JWT校验算法(common/sign) 
 
+xyz.staffjoy.common.crypto.Sign
 
+```java
+public class Sign {
+	static DecodedJWT verifyToken(String tokenString, String signingToken) {
+        JWTVerifier verifier = verifierMap.get(signingToken);
+        if (verifier == null) {
+            synchronized (verifierMap) {
+                verifier = verifierMap.get(signingToken);
+                if (verifier == null) {
+                    Algorithm algorithm = Algorithm.HMAC512(signingToken);
+                    verifier = JWT.require(algorithm).build();
+                    verifierMap.put(signingToken, verifier);
+                }
+            }
+        }
 
+        DecodedJWT jwt = verifier.verify(tokenString);
+        return jwt;
+    }
+}
+```
 
 
 
+#### 登录login种Cookie(common/sessions) 
 
+xyz.staffjoy.common.auth.Sessions
 
+```java
+public class Sessions {
+    public static final long SHORT_SESSION = TimeUnit.HOURS.toMillis(12);
+    public static final long LONG_SESSION = TimeUnit.HOURS.toMillis(30 * 24);
 
+    public static void loginUser(String userId,
+                                 boolean support,
+                                 boolean rememberMe,
+                                 String signingSecret,
+                                 String externalApex,
+                                 HttpServletResponse response) {
+        long duration;
+        int maxAge;
 
+        if (rememberMe) {
+            // "Remember me"
+            duration = LONG_SESSION;
+        } else {
+            duration = SHORT_SESSION;
+        }
+        maxAge = (int) (duration / 1000);
 
+        String token = Sign.generateSessionToken(userId, signingSecret, support, duration);
 
+        Cookie cookie = new Cookie(AuthConstant.COOKIE_NAME, token);
+        cookie.setPath("/");
+        cookie.setDomain(externalApex);
+        cookie.setMaxAge(maxAge);
+        cookie.setHttpOnly(true);
+        response.addCookie(cookie);
+    }
+}
+```
 
 
 
+#### Staffjoy JWT Cookie 
 
+![1608020443999](MicroserviceSpringBootStaffjoy.assets/1608020443999.png)
 
 
 
+#### Cookie中取出JWT令牌(common/sessions) 
 
+xyz.staffjoy.common.auth.Sessions
 
+```java
+public class Sessions {
+    public static String getToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null || cookies.length == 0) return null;
+        Cookie tokenCookie = Arrays.stream(cookies)
+                .filter(cookie -> AuthConstant.COOKIE_NAME.equals(cookie.getName()))
+                .findAny().orElse(null);
+        if (tokenCookie == null) return null;
+        return tokenCookie.getValue();
+    }
+}
+```
 
 
 
+#### Auth 3.6 ~ JWT + Gateway 
 
+![1608018533453](MicroserviceSpringBootStaffjoy.assets/1608018533453.png)
 
 
 
+#### JWT校验和取出用户会话数据(faraday/AuthRequestInterceptor) 
 
+xyz.staffjoy.faraday.core.interceptor.AuthRequestInterceptor
 
+```java
+public class AuthRequestInterceptor implements PreForwardRequestInterceptor {
+    
+	private Session getSession(HttpServletRequest request) {
+        String token = Sessions.getToken(request);
+        if (token == null) return null;
+        try {
+            DecodedJWT decodedJWT = Sign.verifySessionToken(token, signingSecret);
+            String userId = decodedJWT.getClaim(Sign.CLAIM_USER_ID).asString();
+            boolean support = decodedJWT.getClaim(Sign.CLAIM_SUPPORT).asBoolean();
+            Session session = Session.builder().userId(userId).support(support).build();
+            return session;
+        } catch (Exception e) {
+            log.error("fail to verify token", "token", token, e);
+            return null;
+        }
+    }
 
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    private static class Session {
+        private String userId;
+        private boolean support;
+    }
+}
 
+```
 
 
 
+#### 网关传递认证授权信息(faraday/AuthRequestInterceptor) 
 
+xyz.staffjoy.faraday.core.interceptor.AuthRequestInterceptor
 
+```java
+public class AuthRequestInterceptor implements PreForwardRequestInterceptor {
+    
+	private String setAuthHeader(RequestData data, MappingProperties mapping) {
+        // default to anonymous web when prove otherwise
+        String authorization = AuthConstant.AUTHORIZATION_ANONYMOUS_WEB;
+        HttpHeaders headers = data.getHeaders();
+        Session session = this.getSession(data.getOriginRequest());
+        if (session != null) {
+            if (session.isSupport()) {
+                authorization = AuthConstant.AUTHORIZATION_SUPPORT_USER;
+            } else {
+                authorization = AuthConstant.AUTHORIZATION_AUTHENTICATED_USER;
+            }
 
+            this.checkBannedUsers(session.getUserId());
 
+            headers.set(AuthConstant.CURRENT_USER_HEADER, session.getUserId());
+        } else {
+            // prevent hacking
+            headers.remove(AuthConstant.CURRENT_USER_HEADER);
+        }
+        headers.set(AuthConstant.AUTHORIZATION_HEADER, authorization);
 
+        return authorization;
+    }
+}
+```
 
 
 
+#### 登录logout(common/sessions) 
 
+xyz.staffjoy.common.auth.Sessions
 
+```java
+public class Sessions {    
+	public static void logout(String externalApex, HttpServletResponse response) {
+        Cookie cookie = new Cookie(AuthConstant.COOKIE_NAME, "");
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        cookie.setDomain(externalApex);
+        response.addCookie(cookie);
+    }
+}
 
+```
 
 
 
+#### 认证上下文助手类(common/AuthContext) 
 
+xyz.staffjoy.common.auth.AuthContext
 
+```java
+public class AuthContext {
 
+    private static String getRequetHeader(String headerName) {
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+        if (requestAttributes instanceof ServletRequestAttributes) {
+            HttpServletRequest request = ((ServletRequestAttributes)requestAttributes).getRequest();
+            String value = request.getHeader(headerName);
+            return value;
+        }
+        return null;
+    }
 
+    public static String getUserId() {
+        return getRequetHeader(AuthConstant.CURRENT_USER_HEADER);
+    }
 
+    public static String getAuthz() {
+        return getRequetHeader(AuthConstant.AUTHORIZATION_HEADER);
+    }
 
+}
+```
 
 
 
+#### Feign客户端传递用户认证信息(common/FeignRequestHeaderInterceptor) 
 
+xyz.staffjoy.common.auth.FeignRequestHeaderInterceptor
 
+```java
+public class FeignRequestHeaderInterceptor implements RequestInterceptor {
 
+    @Override
+    public void apply(RequestTemplate requestTemplate) {
+        String userId = AuthContext.getUserId();
+        if (!StringUtils.isEmpty(userId)) {
+            requestTemplate.header(AuthConstant.CURRENT_USER_HEADER, userId);
+        }
+    }
+}
+```
 
 
 
+#### Staffjoy架构 
 
+![1606483073145](MicroserviceSpringBootStaffjoy.assets/1606483073145.png)
 
 
 
+### 安全认证代码剖析~服务调用鉴权 
 
+#### 服务间调用授权截获器(common/AuthorizeInterceptor) 
 
+xyz.staffjoy.common.auth.Authorize
 
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface Authorize {
+    // allowed consumers
+    String[] value();
+}
+```
 
+xyz.staffjoy.common.auth.AuthorizeInterceptor
 
+```java
+public class AuthorizeInterceptor extends HandlerInterceptorAdapter {
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        if (!(handler instanceof HandlerMethod)) {
+            return true;
+        }
 
+        HandlerMethod handlerMethod = (HandlerMethod) handler;
+        Authorize authorize = handlerMethod.getMethod().getAnnotation(Authorize.class);
+        if (authorize == null) {
+            return true; // no need to authorize
+        }
 
+        String[] allowedHeaders = authorize.value();
+        String authzHeader = request.getHeader(AuthConstant.AUTHORIZATION_HEADER);
 
+        if (StringUtils.isEmpty(authzHeader)) {
+            throw new PermissionDeniedException(AuthConstant.ERROR_MSG_MISSING_AUTH_HEADER);
+        }
 
+        if (!Arrays.asList(allowedHeaders).contains(authzHeader)) {
+            throw new PermissionDeniedException(AuthConstant.ERROR_MSG_DO_NOT_HAVE_ACCESS);
+        }
 
+        return true;
+    }
+}
+```
 
 
 
 
 
+#### 控制器调用鉴权(account-svc/AccountController) 
 
+xyz.staffjoy.account.controller.AccountController
 
+```java
+public class AccountController {
+    @PostMapping(path = "/create")
+    @Authorize(value = {
+                    AuthConstant.AUTHORIZATION_SUPPORT_USER,
+                    AuthConstant.AUTHORIZATION_WWW_SERVICE,
+                    AuthConstant.AUTHORIZATION_COMPANY_SERVICE
+    })
+    public GenericAccountResponse createAccount(@RequestBody @Valid CreateAccountRequest request) {
+        AccountDto accountDto = accountService.create(request.getName(), request.getEmail(), request.getPhoneNumber());
+        GenericAccountResponse genericAccountResponse = new GenericAccountResponse(accountDto);
+        return genericAccountResponse;
+    }
+    
+    // ....
+}
+```
 
 
 
+#### 用户角色和环境鉴权(account-svc/AccountController) 
 
+xyz.staffjoy.account.controller.AccountController
 
+```java
+public class AccountController {
+	private void validateAuthenticatedUser(String userId) {
+        if (AuthConstant.AUTHORIZATION_AUTHENTICATED_USER.equals(AuthContext.getAuthz())) {
+            String currentUserId = AuthContext.getUserId();
+            if (StringUtils.isEmpty(currentUserId)) {
+                throw new ServiceException("failed to find current user id");
+            }
+            if (!userId.equals(currentUserId)) {
+                throw new PermissionDeniedException("You do not have access to this service");
+            }
+        }
+    }
 
+    private void validateEnv() {
+        if (AuthConstant.AUTHORIZATION_SUPERPOWERS_SERVICE.equals(AuthContext.getAuthz())) {
+            if (!EnvConstant.ENV_DEV.equals(this.envConfig.getName())) {
+                logger.warn("Development service trying to connect outside development environment");
+                throw new PermissionDeniedException("This service is not available outside development environments");
+            }
+        }
+    }
+}
 
+```
 
 
 
+#### API Client传递服务调用方(account-api/AccountClient) 
 
+xyz.staffjoy.account.client.AccountClient
 
+```java
+@FeignClient(name = AccountConstant.SERVICE_NAME, path = "/v1/account", url = "${staffjoy.account-service-endpoint}")
+// TODO Client side validation can be enabled as needed
+// @Validated
+public interface AccountClient {
 
+    @PostMapping(path = "/create")
+    GenericAccountResponse createAccount(@RequestHeader(AuthConstant.AUTHORIZATION_HEADER) String authz, @RequestBody @Valid CreateAccountRequest request);
 
+    // ...
+}
+```
 
 
 
+#### 授权Header定义(common/AuthConstant) 
 
+xyz.staffjoy.common.auth.AuthConstant
 
+```java
+public class AuthConstant {
 
+    public static final String COOKIE_NAME = "staffjoy-faraday";
+    // header set for internal user id
+    public static final String CURRENT_USER_HEADER = "faraday-current-user-id";
+    // ...
+}
+```
 
 
 
+#### Staffjoy Auth Enforcement 
 
+- 外部服务调用（传递header，从网关访问内容部用户，必须加头部）
+- 内部服务调用（传递header，可能会被绕开，内部可接受）
 
+![1608020329294](MicroserviceSpringBootStaffjoy.assets/1608020329294.png)
 
 
 
+### 用户角色鉴权扩展 
 
+#### 参考权限模型 
 
+- 将用户关联到用户组，常见方式，进而定义用户的角色
+- 将用户关联到注册应用，企业内部的应用比较多，进而定义用户的角色
 
+![1608023903014](MicroserviceSpringBootStaffjoy.assets/1608023903014.png)
 
 
 
+#### Auth 3.7 ~ JWT + RBAC 
 
+- RBAC: Role based account service
+- 当用户鉴权登录后，定义相应的角色
+- 后续用户访问服务的时候，加上用户的角色信息，roleinfo
 
+![1608023921291](MicroserviceSpringBootStaffjoy.assets/1608023921291.png)
 
 
 
+### 参考链接 
 
+1. [RFC 7519](https://tools.ietf.org/html/rfc7519.html)
+2. [jwt.io](https://jwt.io/)
+3. [Java implementation of JSON Web Token (JWT) by Auth0](https://github.com/auth0/java-jwt)
 
 
 
+## 微服务测试 设计和实践
 
+### 微服务测试挑战 
 
+- 分而治之的思想
+- 先隔离应用，一个一个服务的进行测试，
+- 然后，进行服务之间的集成测试
 
+![1608025360267](MicroserviceSpringBootStaffjoy.assets/1608025360267.png)
 
 
 
+#### Staffjoy架构图 
 
+- 进行微服务的测试，测试蓝色的www和绿色的微服务应用
 
+![1606483073145](MicroserviceSpringBootStaffjoy.assets/1606483073145.png)
 
 
 
+### 微服务测试分类和技术 
 
+#### Spring(Boot)应用分层 
 
+- Controller
+- service（贫血(一般项目都是贫血)和充血模型设计）
+- Domain
+- Repository
 
+![1608025388487](MicroserviceSpringBootStaffjoy.assets/1608025388487.png)
 
 
 
+#### 单元测试(Unit Test) 
 
+- 可使用 juint 和 mockito
+  1. [JUnit](https://junit.org/junit5/)
+  2. [Mockito](https://site.mockito.org/)
 
+![1608025760127](MicroserviceSpringBootStaffjoy.assets/1608025760127.png)
 
 
 
+#### 集成测试(Integration Test) 
 
+![1608025778551](MicroserviceSpringBootStaffjoy.assets/1608025778551.png)
 
 
 
+#### 组件测试(Component Test) ~ 内部Mock 
 
+1. [WireMock](http://wiremock.org/)
+2. [Spring Mockbean](https://www.baeldung.com/java-spring-mockito-mock-mockbean)
+3. 经常使用内存数据库，h2，进行测试
 
+![1608025802166](MicroserviceSpringBootStaffjoy.assets/1608025802166.png)
 
 
 
+#### 组件测试(Component Test) ~ 外部Mock 
 
+1. [Hoverfly](https://hoverfly.io/)
+2. [Mountebank](http://www.mbtest.org/)
 
+![1608025823465](MicroserviceSpringBootStaffjoy.assets/1608025823465.png)
 
 
 
+#### 契约测试(Contract Test) 
 
+1. [Pact](https://docs.pact.io)
+2. [Spring Cloud Contract](https://spring.io/projects/spring-cloud-contract)
 
+![1608026012087](MicroserviceSpringBootStaffjoy.assets/1608026012087.png)
 
 
 
+#### 契约驱动测试 
 
+- 可以用到客户端，也可以用到服务端
 
+![1608026030031](MicroserviceSpringBootStaffjoy.assets/1608026030031.png)
 
 
 
+#### 端到端测试(End-to-End Test) 
 
+1. [Selenium](https://www.seleniumhq.org/projects/webdriver/)
+2. [REST-assured](http://rest-assured.io/)
+3. 最常见的是在UI使用 Selenium
 
+![1608026098230](MicroserviceSpringBootStaffjoy.assets/1608026098230.png)
 
 
 
+#### 总结 
 
+> 一致性 > 具体定义 
 
+| 分类       | 功能                                     |
+| ---------- | ---------------------------------------- |
+| 单元测试   | 确保类、模块功能正确                     |
+| 集成测试   | 确保组件间接口、交互和链路正确           |
+| 组件测试   | 确保微服务作为独立整体，接口功能正确契约 |
+| 契约测试   | 确保服务提供方和消费方都遵循契约规范     |
+| 端到端测试 | 确保整个应用满足用户需求                 |
+| 探索测试   | 手工探索学习系统功能，改进自动化测试     |
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+### 测试金字塔和实践 
 
 
 
