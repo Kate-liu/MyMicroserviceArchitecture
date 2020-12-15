@@ -1794,5 +1794,414 @@ public class AuthConstant {
 
 ### 测试金字塔和实践 
 
+#### 测试金字塔 
+
+越是底层，越有利，出问题的代价的越低
+
+![1608027493386](MicroserviceSpringBootStaffjoy.assets/1608027493386.png)
+
+
+
+#### 端到端测试实践 
+
+1. 80/20，聚焦核心业务服务（2/8定律）
+2. 用户使用场景驱动
+3. 适当Mock不稳定测试点
+4. 规范测试环境和环境自动化
+5. 测试数据管理
+6. 灰度测试+生产监控 (Beta 测试，进行一定量的线上测试，线上环境更复杂)
+
+
+
+
+
+### Test Case Review ~ 单元测试 
+
+![1608025760127](MicroserviceSpringBootStaffjoy.assets/1608025760127.png)
+
+
+
+### Test Case Review ~ 集成测试 
+
+#### 集成测试(Integration Test) 
+
+![1608025778551](MicroserviceSpringBootStaffjoy.assets/1608025778551.png)
+
+#### Staffjoy架构图 
+
+![1606483073145](MicroserviceSpringBootStaffjoy.assets/1606483073145.png)
+
+
+
+
+
+### Test Case Review ~ 组件测试 
+
+#### 组件测试(Component Test) ~ 内部Mock 
+
+![1608025802166](MicroserviceSpringBootStaffjoy.assets/1608025802166.png)
+
+
+
+#### Staffjoy架构图 
+
+![1606483073145](MicroserviceSpringBootStaffjoy.assets/1606483073145.png)
+
+
+
+### Mock vs Spy 
+
+#### 测试补充 
+
+1. Mock vs. Spy
+2. BDD行为驱动测试(了解)
+3. 性能测试 
+
+1. [JMeter](https://jmeter.apache.org)
+2. [Gatling](https://martinfowler.com/articles/microservice-testing/)
+
+![1608027813457](MicroserviceSpringBootStaffjoy.assets/1608027813457.png)
+
+
+
+
+
+### 参考链接 
+
+1. [JUnit](https://junit.org/junit5/)
+2. [Mockito](https://site.mockito.org/)
+3. [WireMock](http://wiremock.org/)
+4. [Spring Mockbean](https://www.baeldung.com/java-spring-mockito-mock-mockbean)
+5. [Hoverfly](https://hoverfly.io/)
+6. [Mountebank](http://www.mbtest.org/)
+7. [Pact](https://docs.pact.io)
+8. [Spring Cloud Contract](https://spring.io/projects/spring-cloud-contract)
+9. [Selenium](https://www.seleniumhq.org/projects/webdriver/)
+10. [REST-assured](http://rest-assured.io/)
+11. [JMeter](https://jmeter.apache.org)
+12. [Gatling](https://gatling.io/open-source/)
+13. [Microservice Testing](https://martinfowler.com/articles/microservice-testing/)
+14. [Practical Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)
+
+
+
+## 可运维架构 设计和实践 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
