@@ -2122,43 +2122,143 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 
 
 
+### 手工服务部署和测试 
+
+#### 部署步骤 
+
+1. 清理释放内存
+• 活动监控器
+• 关闭Docker
+2. 部署 MySQL 数据库
+• staffjoy_account
+• staffjoy_company
+3. 部署 SkyWalking
+    • bin/startup.sh
+    • IDE 设置 skywalking-agent
+4. 部署服务
+    • 本地机密数据配置
+    • Faraday配置Review
+    • mail -> bot -> account -> company -> www -> whoami -> faraday
+5. 部署单页应用
+• npm install
+• npm start
+6. 启用 SwitchHosts 
 
 
 
+#### 部署 MySQL 数据库
+
+- create database staffjoy_account;
+- create database staffjoy_company;
+- 创建表：
+  - account-svc/src/main/resources/db/schema.sql
+  - company-svc/src/main/resources/db/schema.sql
 
 
 
+#### 部署 SkyWalking
+
+- run SkyWalking
+  - win：D:\apache-skywalking-apm-6.1.0\apache-skywalking-apm-bin\bin\startup.bat
+  - mac：apache-skywalking-apm-bin\bin\startup.sh
+- IDE setting SkyWalking
+  - Run > Edit Configurations 
+  - VM options：-javaagent:/path/to/your/SkyWalking/agent/skywalking-agent.jar
+  - Environment variables：SW_AGENT_NAME=xxx
+  - 演示示例配置：
+  - -javaagent:D:\apache-skywalking-apm-6.1.0\apache-skywalking-apm-bin\agent\skywalking-agent.jar
+  - SW_AGENT_NAME=account-svc
+  - SW_AGENT_NAME=bot-svc
+  - SW_AGENT_NAME=company-svc
+  - SW_AGENT_NAME=faraday-svc
+  - SW_AGENT_NAME=ical-svc
+  - SW_AGENT_NAME=mail-svc
+  - SW_AGENT_NAME=sms-svc
+  - SW_AGENT_NAME=www-svc
+  - SW_AGENT_NAME=whoami-svc
 
 
 
+#### 部署服务
+
+- 本地机密数据配置
+  - config/application.yml
+  - sentry-dsn，是集中日志监控，需要保证格式一样，也可以用自己的
+  - signing-secret，是JAT令牌的签名，需要配置
+  - 后面其他的配置，是使用阿里云的短信服务和邮件服务配置
+- Faraday配置Review
+  - faraday 网关配置：faraday/src/main/resources/application-dev.yml
+  - mappings 中展示的是 路由表，不同的 host 对应 不同的 IP
+- 部署微服务
+  - 依次启动：mail -> bot -> account -> company -> www -> whoami -> faraday
+  - 报错：time-zone issue 
+  - reference：https://blog.csdn.net/CHS007chs/article/details/81348291
 
 
 
+#### 部署单页应用
+
+- ps：单页应用要求linux或mac环境编译，windows环境暂不支持
+- cd frontend/myaccount
+- npm install 
+- npm start
+- cd frontend/app
+- npm install 
+- npm start
+- win 启动失败，没法进行测试中的 管理员 后台登录，以及排班等
 
 
 
+#### SwitchHosts 
+
+```sh
+# staffjoy-local
+
+127.0.0.1 faraday.staffjoy-v2.local
+127.0.0.1 account.staffjoy-v2.local
+127.0.0.1 company.staffjoy-v2.local
+127.0.0.1 ical.staffjoy-v2.local
+127.0.0.1 whoami.staffjoy-v2.local
+127.0.0.1 superpowers.staffjoy-v2.local
+127.0.0.1 www.staffjoy-v2.local
+127.0.0.1 myaccount.staffjoy-v2.local
+127.0.0.1 app.staffjoy-v2.local
+```
 
 
 
+#### 测试步骤
+
+1. 浏览器访问
+• www.staffjoy-v2.local
+2. 校验业务流程
+• 注册管理员和公司，登录
+• 注册雇员和登录（由于没有企业邮箱，无法实现雇员的登录，但是强行实现了管理员的注册）
+• 排班
+3. 校验 Cookie
+4. 校验 DB 
 
 
 
+### SkyWalking 调用链监控实验 
 
+#### 测试步骤
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+1. 浏览器访问 Dashboard
+• http://localhost:8080
+• admin/admin
+2. 校验拓扑图
+3. 校验仪表盘
+   1. 热力图，Global Heatmap
+   2. 百分位，Global Percent Response
+   3. 全局，服务，JVM等信息
+4. 校验追踪
+  1. list 展示
+  2. tree 展示
+5. 结束清理
+  • 关闭服务
+  • 关闭单页应用
+  • 关闭 SkyWalking(jps) 
 
 
 
