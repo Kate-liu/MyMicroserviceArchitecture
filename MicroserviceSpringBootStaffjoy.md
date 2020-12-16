@@ -2270,9 +2270,9 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
   1. list 展示
   2. tree 展示
 5. 结束清理
-  • 关闭服务
-  • 关闭单页应用
-  • 关闭 SkyWalking(jps) 
+    • 关闭服务
+    • 关闭单页应用
+    • 关闭 SkyWalking(jps) 
 
 
 
@@ -2433,7 +2433,7 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 4.  启用 SwitchHosts
 5. 校验 Staffjoy
 6. 清理
-  • docker-compose down 
+    • docker-compose down 
 
 
 
@@ -2447,79 +2447,157 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 
 
 
+### 参考链接 
+
+1. [SwitchHosts](https://github.com/oldj/SwitchHosts)
+2. [SkyWalking(6.1.0) Release](https://github.com/apache/skywalking/releases)
+3. [SkyWalking Java Agent Readme](https://github.com/apache/skywalking/blob/master/docs/en/setup/service-agent/java-agent/README.md)
+4. [MySQL(5.7.25) + Workbench download](https://dev.mysql.com/downloads/mysql/)
+5. [Docker 架构](https://docs.docker.com/engine/docker-overview/)
+6. [容器化Spring Boot应用](https://stackabuse.com/dockerizing-a-spring-boot-application/)
+7. [Docker Desktop for Mac install](https://docs.docker.com/docker-for-mac/install/)
+8. [Docker Desktop for Win install](https://docs.docker.com/docker-for-windows/install/)
+
+
+
+
+
 ## 云原生架构和 Kubernetes 容器云部署 
 
+### 到底什么是云原生架构？ 
 
+#### 云原生（Cloud Native）应用定义 
 
+- Applications adopting the principles of Microservices packaged as Containers orchestracted by Platforms running on top of Cloud infrastructure, developed using practices such as Continous Delivery and DevOps.
+- 基于微服务原理而开发的应用，以容器方式打包。在运行时，容器由运行于云基础设施之上的平台进行调度。应用开发采用持续交付和 DevOps 实践。 
+- https://www.slideshare.net/bibryam/designing-cloud-native-applications-with-kubernetes
 
 
 
+#### 云演进史 
 
+![1608128407699](MicroserviceSpringBootStaffjoy.assets/1608128407699.png)
 
 
 
+#### CNCF 
 
+- Cloud Native Computing Foundation (CNCF)
+- https://www.cncf.io/
+- https://landscape.cncf.io/zoom=80
 
 
 
+### Kubernetes 背景和架构 
 
+#### Kubernetes 历史 
 
+- https://medium.com/containermind/a-new-era-of-container-cluster-management-with-kubernetes-cd0b804e1409
+- https://cloud.google.com/containers/?hl=zh-cn
+- Borg: Google’s First Unified Container Cluster Manager
+- Omega: Google’s Second Generation Container Cluster Manager
+- Kubernetes: The Next Generation, General Purpose Container Cluster Manager
 
+![1608129204530](MicroserviceSpringBootStaffjoy.assets/1608129204530.png)
 
+![1608129291420](MicroserviceSpringBootStaffjoy.assets/1608129291420.png)
 
 
 
+#### Kubernetes 趋势 
 
+![1608129385027](MicroserviceSpringBootStaffjoy.assets/1608129385027.png)
 
 
 
+#### Kubenetes 解决什么问题？ 
 
+- 管理整个微服务
 
+![1608129411163](MicroserviceSpringBootStaffjoy.assets/1608129411163.png)
 
 
 
+#### Kubernetes 架构 
 
+- Master Node，选主操作，只有一个主中的主
+- 用户操作 API server，类似于 etcd 的一份 Proxy
 
+![1608129513131](MicroserviceSpringBootStaffjoy.assets/1608129513131.png)
 
 
 
+### Kubernetes 有哪些基本概念？ 
 
+#### Kubernetes 集群（Cluster） 
 
+- 每一个物理机，一起组成了一个超大的集群
 
+![1608129719412](MicroserviceSpringBootStaffjoy.assets/1608129719412.png)
 
 
 
+#### 容器 Container 
 
+- 以每一个容器单元 运行在系统中
 
+![1608129800453](MicroserviceSpringBootStaffjoy.assets/1608129800453.png)
 
 
 
+#### POD 
 
+- 调度的基本单元，一个POD一般只跑一个调度容器
 
+![1608129894897](MicroserviceSpringBootStaffjoy.assets/1608129894897.png)
 
 
 
+#### 副本集 ReplicaSet 
 
+- 一个应用 发布 多个 POD，保证高可用
+- 保证副本的个数，通过模板规范，ReplicaSet 监控，上线 POD和下线POD
 
+![1608129919867](MicroserviceSpringBootStaffjoy.assets/1608129919867.png)
 
 
 
+#### 服务 Service 
 
+- 底层会对 service 进行寻址和负载均衡
+- Service 对接客户端
 
+![1608130002276](MicroserviceSpringBootStaffjoy.assets/1608130002276.png)
 
 
 
+#### 发布 Deployment 
 
+- 管理 Replicaset，保证高级发布，滚动发布，蓝绿发布
 
+![1608130074095](MicroserviceSpringBootStaffjoy.assets/1608130074095.png)
 
 
 
+#### 滚动发布 Rolling Update 
 
+- 滚动的添加和减少 POD，进行版本升级发布
+- 通过 sercice 机制，实现屏蔽发布的细节
 
+![1608130142645](MicroserviceSpringBootStaffjoy.assets/1608130142645.png)
 
 
 
+#### 发布和服务总结 
 
+- 注意层级，Deployment 与 ReplicaSet
+- Service，保证服务间相互路由寻址
+
+![1608130231886](MicroserviceSpringBootStaffjoy.assets/1608130231886.png)
+
+
+
+#### ConfigMap/Secret 
 
 
 
