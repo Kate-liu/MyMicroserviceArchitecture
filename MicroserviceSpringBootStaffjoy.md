@@ -1,4 +1,4 @@
-Microservice Spring Boot Staffjoy
+# Microservice Spring Boot Staffjoy
 
 > 本文档属于微服务和云原生架构项目，基于 Spring Boot 和 Kubernetes 技术栈，
 >
@@ -3103,6 +3103,82 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 - 国内：Udesk、 环信、美洽、智⻮齿云客服等 
 
 ![1608199426108](MicroserviceSpringBootStaffjoy.assets/1608199426108.png)
+
+
+
+### WWW 服务 
+
+#### 注册激活流程 
+
+![1608201343578](MicroserviceSpringBootStaffjoy.assets/1608201343578.png)
+
+
+
+#### Staffjoy Auth ~ 登录认证阶段 
+
+![1608020329294](MicroserviceSpringBootStaffjoy.assets/1608020329294.png)
+
+
+
+#### 登录流程 
+
+![1608201417361](MicroserviceSpringBootStaffjoy.assets/1608201417361.png)
+
+
+
+### MyAccount & App 单页应用 
+
+#### ReactJS 架构 
+
+- 使用 JSX 翻译技术，翻译成为 JavaScript代码
+- 内部使用 React vitual DOM，实现提升浏览器性能
+- https://developer.ibm.com/tutorials/wa-react-intro/
+
+![1608203372477](MicroserviceSpringBootStaffjoy.assets/1608203372477.png)
+
+
+
+#### Why Redux 
+
+- 集中组件存储
+- 动态更新
+- https://blog.codecentric.de/en/2017/12/developing-modern-offline-apps-reactjs-redux-electron-part-3-reactjs-redux-basics/
+
+![1608203410261](MicroserviceSpringBootStaffjoy.assets/1608203410261.png)
+
+
+
+#### Redux 架构 
+
+- https://medium.com/mofed/react-redux-architecture-overview-7b3e52004b6e
+- https://github.com/reduxjs/redux/issues/653
+
+![1608203473377](MicroserviceSpringBootStaffjoy.assets/1608203473377.png)
+
+
+
+
+
+### 参考链接 
+
+1. [ReactJS架构](https://developer.ibm.com/tutorials/wa-react-intro/)
+2. [Why Redux](https://blog.codecentric.de/en/2017/12/developing-modern-offline-apps-reactjs-redux-electron-part-3-reactjs-redux-basics/)
+3. [Redux架构](https://medium.com/mofed/react-redux-architecture-overview-7b3e52004b6e)
+4. [更多Redux架构图](https://github.com/reduxjs/redux/issues/653)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
