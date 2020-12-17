@@ -1,4 +1,4 @@
-# 节点网络Microservice Spring Boot Staffjoy
+Microservice Spring Boot Staffjoy
 
 > 本文档属于微服务和云原生架构项目，基于 Spring Boot 和 Kubernetes 技术栈，
 >
@@ -2792,14 +2792,28 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 #### 安装和访问 Kubernetes Dashboard 
 
 1. 安装Kubernetes Dashboard
-• https://github.com/kubernetes/dashboard
-• kubectl get pods —namespace=kube-system
+  • https://github.com/kubernetes/dashboard
+  • kubectl get pods —namespace=kube-system
+
 2. 启动 kube proxy
-• kubectl proxy
+  • kubectl proxy
+
 3. 生成访问令牌
-• kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+  • kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+
+  1. ```sh
+    Data
+    ====
+    ca.crt:     1025 bytes
+    namespace:  11 bytes
+    token:      eyJhbGciOiJSUzI1NiIsImtpZCI6ImNDdWtYS291NW9JRGQyMm9qMmgxR2RmM3dBblc3T3czUmx0Y1VHdFVhTXcifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJ2cG5raXQtY29udHJvbGxlci10b2tlbi1xdjdtOSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJ2cG5raXQtY29udHJvbGxlciIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImZiNmIyZjdlLTQyNWMtNDA2NC1hNzZkLTRjYmI5N2Q3OTRlYiIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlLXN5c3RlbTp2cG5raXQtY29udHJvbGxlciJ9.S-ypeFrvDZH1rXSbUTF8nBVraxCf-XRk1grnTcHWowwLoyHc_ejAXkH4Ig9Zpq0ENQWBIreN6EVgjzHtFO4l24-6w1CpnXfPXkISmLfsYqnFLDoVjo9andMAzEJkW0QVhXw2x7TzYDmFACwj-a2oVKZsxiSeF64Oc1BH2MZv8tpcNuTQsoFNiDcv0_eNAhc_7wNNzt54uRiUb_ZJLa3aAlLsSFb4wFCsJ0tFDaYYK5j9e3SeHHgtc95Sp7TJK91accU57BmPw1wz7-j4lOJFFOUL_tC47LzuGdkf5rsZOTekyCtamEclNPjt7nXe0p_dmtyzk8QDvlKc-fCxoOs5fQ
+    
+    ```
+
 4. 访问 Dashboard
-• http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/ 
+
+  1. http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/ 
+  2. http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/discovery?namespace=default
 
 
 
@@ -2807,57 +2821,288 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 
 ### 将 Staffjoy 部署到本地 Kubernetes 环境 
 
+#### 构建和部署
+
+1. 镜像构建(可选)
+   • mvn clean package -DskipTests
+   • docker-compose build
+   • docker images
+
+2. 部署mysql数据库(可选)
+• staffjoy_account
+• staffjoy_company
+• 授予ip访问权限
+3. 部署Staffjoy(k8s/test)
+    • kubectl apply -f config.yaml
+    • kubectl apply -f test
+4. 端口转发
+    • 查询faraday pod名 : Kubectl get pods
+    • sudo kubectl port-forward faraday-svc-deployment-8584d9c74d-v92wt 80:80
+5.  启用SwitchHosts(转发域名)
+6. 命令行校验
+    • kubectl get pods -o wide
+    • Kubectl get services
+    • Kubectl get deployments
+7. K8s Dashboard校验
+8. Staffjoy校验
+9. 清理
+    • kubectl delete deployments --all
+    • kubectl delete services --all
+    • kubectl delete configmaps --all 
+
+
+
+#### MySQL 访问权限 
+
+1. 登录 MySQL
+• mysql -u root -p
+2. 查询 user 表
+• use mysql;
+• Select user, host from user;
+3. 授权
+  1. grant all privileges on *.* to root@your_ip identified by ‘root_password’ with grant option; 
+  2.  grant all privileges on *.* to root@192.168.1.105 identified by '' with grant option;
+
+
+
+### 生产环境 Kubernetes 部署文件剖析 
+
+#### Staffjoy 阿里云 Kubernetes部署架构 
+
+- aliyun VPC
+- aliyun ELB
+- aliyun RDS
+
+![1608190248702](MicroserviceSpringBootStaffjoy.assets/1608190248702.png)
 
 
 
 
 
+#### 阿里云 Kubernetes 拓扑结构 
+
+- https://developer.aliyun.com/article/88526
+
+![1608190325332](MicroserviceSpringBootStaffjoy.assets/1608190325332.png)
+
+
+
+#### 部署文件
+
+- 调整环境部署，common-lib/src/main/java/xyz/staffjoy/common/env/EnvConfig.java
+- 动态配置更新：k8s/uat/config/logback-config.yaml
+- 自行配置开发环境：k8s/uat/config/config.yaml
+- 阿里云，从docker hub，拉取镜像进行部署，k8s/uat/account-svc.yaml
+- uat 使用的不是本地的logback-config.yaml文件，使用的是 mount 的logback-config.yaml文件，account-svc/src/main/resources/application-uat.yml
+- 使用 LoadBalancer，进行公网使用，每次部署都是动态IP，也可以使用静态黏住IP，k8s/uat/faraday-svc.yaml
+- 数据库使用 RDS的字符串，k8s/uat/config/config.yaml
+
+
+
+### 阿里云 Kubernetes 环境创建 
+
+#### Kubernetes 环境创建
+
+1. 创建 VPC
+2. 创建 RDS 数据库
+• 加 IP 白名单
+• 更新 JDBC 连接字符串
+• 创建 root 账户
+• 创建数据库和表
+3. 创建共享版 Kubernetes 集群
+• 更新 .kube/config
+4. 校验
+• kubectl config current-context
+• kubectl cluster-info
+• kubectl get nodes 
+
+
+
+### 将 Staffjoy 部署到阿里云 Kubernetes 环境 
+
+#### Staffjoy 部署
+
+1. 部署 Staffjoy(Kubernetes/UAT)
+   • kubectl apply -f config
+   • kubectl apply -f uat
+2. 阿里云 Dashboard 校验
+3. 命令行校验
+   • kubectl get pods -o wide
+   • Kubectl get services
+   • Kubectl get deployments 
+4. 启用 SwitchHosts
+   • 更新 ELB IP 地址
+5. Staffjoy 校验
+6. 删除阿里云 Kubernetes 和 RDS
+
+
+
+### Kubernetes 应用动态配置实验 
+
+#### Staffjoy 动态配置实验步骤
+
+1. Kubernetes Dashboard  校验
+   • account-svc pod 命令控制台校验 logback-config.yaml 文件内容
+
+2. 更新 logback 配置（Kubernetes/UAT/config）
+• 更新 logback 为 debug 输出
+• kubectl apply -f logback-config.yaml
+3. Kubernetes Dashboard 校验
+• account-svc pod 命令控制台校验 logback-config.yaml 文件更新
+• 等待 30 秒
+• account-svc pod 日志控制台输出 debug 日志 
+
+
+
+### Kubernetes 应用金丝雀发布实验 
+
+#### 金丝雀发布 
 
 
 
 
 
+#### 金丝雀发布步骤
+
+1. www-web-deployment 扩容到 3 个实例
+
+2. 发布金丝雀 www-web-deployment-canary
+  • kubectl apply -f canary
+  k8s/uat/canary/www-web-canary.yaml
+3. 校验
+4. 扩容金丝雀到 3 个实例
+5. 删除 www-web-deployment 
 
 
 
 
 
+### 参考链接 
+
+1. [Designing Cloud Native Application with Kubernetes ppt](https://www.slideshare.net/bibryam/designing-cloud-native-applications-with-kubernetes)
+2. [cncf.io](https://cncf.io)
+3. [landscape.cncf.io](https://landscape.cncf.io)
+4. [Kubernetes发展历史](https://medium.com/containermind/a-new-era-of-container-cluster-management-with-kubernetes-cd0b804e1409)
+5. [cloud.google.com](https://cloud.google.com/containers/?hl=zh-cn)
+6. [Docker Desktop for Mac/Win阿里云定制版](https://github.com/AliyunContainerService/k8s-for-docker-desktop)
+7. [Minikube阿里云定制版](https://github.com/AliyunContainerService/minikube)
+8. [Kubernetes Dashboard安装](https://github.com/kubernetes/dashboard)
+9. [阿里云Kubernetes拓扑结构](https://yq.aliyun.com/articles/88526)
 
 
 
 
 
+## 项目复盘、扩展和应用 
+
+### 项目复盘 
+
+#### 课程目标和主要内容 Dev 
+
+1. 掌握微服务架构和前后分离架构设计
+2. 掌握基于 Spring Boot 搭建微服务基础框架
+3. 进一步提升 Java/Spring 微服务开发技能
+4. 掌握 Spring Boot 微服务测试和相关实践
+5. 理解 SaaS 多租户应用的架构和设计 
 
 
 
+#### 课程目标和主要内容 Ops
+
+6. 理解可运维架构理念和相关实践
+7. 掌握服务容器化和容器云部署相关实践
+8. 理解云时代的软件工程流程和实践 
 
 
 
+### 项目扩展
+
+1. HTTPS
+2. 测试
+• 编码规范
+• 测试覆盖率
+• 性能测试
+3. CI/CD(持续继承，持续交付)
+4.  监控
+  • Log/Trace/Metrics/Alerting
+  • 业务指标监控
+  • 端用户体验监控
+  • 网站分析 Web Analytics
+5. 帮助文档 
 
 
 
+### 项目应用
+
+1. 商城 as a Service
+• Shopify (https://www.shopify.com/)
+2. 客服 as a Service
+• Intercom (https://www.intercom.com/)
+3. 异常日志 as a Service
+• Sentry (https://sentry.io)
+4. 配置中心 as a Service
+• Launch Darkly (https://launchdarkly.com/) 
 
 
 
+### 参考链接 
+
+1. [Shopify ~ 商城 as a Service](https://www.shopify.com/)
+2. [Intercom ~ 客服 as a Service](https://www.intercom.com/)
+3. [Sentry ~ 日常日志 as a Service](https://sentry.io)
+4. [Launch Darkly ~ 开关中心 as a Service](https://launchdarkly.com/)
 
 
 
+## Staffjoy 微服务实现简析 
+
+### Review 步骤
+
+1. 服务 API 客户端
+
+2. 服务实现端
+   1. POM
+   2. Configuration & Properties
+   3. DB Schema
+   4. Model + Repository
+   5. Service
+   6. Controller
+   7. Main App
+   8. 一个接口样例 
+
+![1606483073145](MicroserviceSpringBootStaffjoy.assets/1606483073145.png)
 
 
 
+### Account 服务 
+
+- [link](#数据和接口模型设计～账户服务 )
 
 
 
+### Company 服务 
+
+- [link](#数据和接口模型设计～公司服务 )
 
 
 
+### Mail、SMS 和 Bot 服务 
 
 
 
+### Faraday 网关服务 
+
+- [link](#Faraday 网关内核设计 )
 
 
 
+### WhoAmI 服务 
 
+#### Intercom 客服系统集成 
+
+- 国内：Udesk、 环信、美洽、智⻮齿云客服等 
+
+![1608199426108](MicroserviceSpringBootStaffjoy.assets/1608199426108.png)
 
 
 
