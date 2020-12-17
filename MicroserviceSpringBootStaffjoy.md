@@ -1,4 +1,4 @@
-# Microservice Spring Boot Staffjoy
+# 节点网络Microservice Spring Boot Staffjoy
 
 > 本文档属于微服务和云原生架构项目，基于 Spring Boot 和 Kubernetes 技术栈，
 >
@@ -2598,6 +2598,272 @@ SpringCloud集中配置 ：https://github.com/sqshq/piggymetrics/tree/master/con
 
 
 #### ConfigMap/Secret 
+
+- 提供环境配置和文件卷mount持久化配置
+- 支持Secret的配置管理和安全权限
+
+![1608172847915](MicroserviceSpringBootStaffjoy.assets/1608172847915.png)
+
+
+
+#### DaemonSet 
+
+- 每一个Node，需要一个守护进程
+
+![1608172872158](MicroserviceSpringBootStaffjoy.assets/1608172872158.png)
+
+
+
+#### 其它概念 
+
+- Volume（卷存储，数据不丢）
+- PersistentVolume（持久卷，高级存储，对接云存储）
+- PersistentVolumeClaims（申请PV的资源数据，大小等信息）
+- StatefulSet（有状态的发布机制）
+- Job（跑一次的任务）
+-  CronJob （周期跑的任务）
+
+![1608172915990](MicroserviceSpringBootStaffjoy.assets/1608172915990.png)
+
+
+
+#### 概念补充
+
+- Label/Selector（标签）
+- Namespace（逻辑性隔离机制）
+- Readiness Probe（就绪探针）
+- Liveness Probe（活跃探针 
+
+![1608172982149](MicroserviceSpringBootStaffjoy.assets/1608172982149.png)
+
+
+
+#### 概念总结 
+
+| 概念              | 作用                                       |
+| ----------------- | ------------------------------------------ |
+| Cluster           | 超大计算机抽象，由节点组成                 |
+| Container         | 应用居住和运行在容器中                     |
+| Pod               | Kubernetes 基本调度单位                    |
+| ReplicaSet        | 创建和管理 Pod，支持无状态应用             |
+| Service           | 应用 Pods 的访问点，屏蔽 IP 寻址和负载均衡 |
+| Deployment        | 管理 ReplicaSet，支持滚动等高级发布机制    |
+| ConfigMap/Secrets | 应用配置，secret 敏感数据配置              |
+| DaemonSet         | 保证每个节点有且仅有一个 Pod，常见于监控   |
+| StatefulSet       | 类似 ReplicaSet，但支持有状态应用          |
+| Job                                     | 运行一次就结束的任务               |
+| CronJob                                 | 周期性运行的任务                   |
+| Volume                                  | 可装载磁盘文件存储                 |
+| PersisentVolume/ PersistentVolumeClaims | 超大磁盘存储抽象和分配机制         |
+| Label/Selector                          | 资源打标签和定位机制               |
+| Namespace                               | 资源逻辑隔离机制                   |
+| Readiness Probe                         | 就绪探针，流量接入 Pod 判断依据    |
+| Liveness Probe                          | 存活探针，是否 kill Pod 的判断依据 |
+
+
+
+### 理解 Kubernetes 节点网络和 Pod 网络 
+
+#### 节点和 Pod 网络 
+
+- 修改路由寻址规则，router/gateway
+- 虚拟网桥 cbr
+
+![1608175101526](MicroserviceSpringBootStaffjoy.assets/1608175101526.png)
+
+
+
+### 深入理解 Service 和 Service Discovery 
+
+#### Service 如何寻址？ 
+
+- Service  和 pod 网络，不是在一个网络内
+
+![1608175206640](MicroserviceSpringBootStaffjoy.assets/1608175206640.png)
+
+
+
+#### 用户空间代理模式 
+
+- 早期版本，1.2之前
+
+![1608175281303](MicroserviceSpringBootStaffjoy.assets/1608175281303.png)
+
+
+
+#### iptables/ipvs 模式 
+
+- net fileter 直接进行转发，不需要进行用户和内核态的转发
+- 简化传输链路
+
+![1608175329470](MicroserviceSpringBootStaffjoy.assets/1608175329470.png)
+
+
+
+### NodePort vs LoadBalancer vs Ingress 
+
+#### 外部流量如何对Service 寻址 ？
+
+![1608176082972](MicroserviceSpringBootStaffjoy.assets/1608176082972.png)
+
+
+
+#### NodePort 
+
+- 暴露 Service 到公网
+
+![1608176156414](MicroserviceSpringBootStaffjoy.assets/1608176156414.png)
+
+
+
+#### Load Balancer 
+
+- 本地部署不支持，云服务可以使用
+- 费用较高，IP多
+
+![1608176244145](MicroserviceSpringBootStaffjoy.assets/1608176244145.png)
+
+
+
+#### Ingress 
+
+- 进行反向代理和路由，一个IP和LB，就可以实现整个集群部署
+
+![1608176258057](MicroserviceSpringBootStaffjoy.assets/1608176258057.png)
+
+
+
+#### 总结 
+
+|              | 作用                                            | 实现                                   |
+| ------------ | ----------------------------------------------- | -------------------------------------- |
+| 节点网络     | Master/Worker 节点之间网络互通                  | 路由器，交换机，网卡                   |
+| Pod 网络     | Pod 之间互通                                    | 虚拟网卡，虚拟网桥，路由器             |
+| Service 网络 | 屏蔽 Pod 地址变化+负载均衡                      | Kube-proxy, Netfilter, Api-Server，DNS |
+| NodePort     | 将 Service 暴露在节点网络上                     | Kube-proxy + Netfliter                 |
+| LoadBalancer | 将Service暴露在公网上+负载均衡                  | 公有云 LB + NodePort                   |
+| Ingress      | 反向路由，安全，日志监控 (类似反向代理 or 网关) | Nginx/Envoy/Traefik/Faraday            |
+
+
+
+### 本地测试 Kubernetes 部署文件剖析 
+
+#### 本地 Kubernetes 部署架构 
+
+- 数据库，需要额外的 Service 实现
+- 需要加一个 NodePort，进行端口映射，请求转发
+- 环境分类：本地，生产，uat
+- 配置文件：
+  - 更改为自己的配置方式：k8s/test/config/config.yaml
+  - 创建一个MySQL的链接服务： k8s/test/mysql-svc.yaml
+
+![1608177263050](MicroserviceSpringBootStaffjoy.assets/1608177263050.png)
+
+
+
+### 本地测试 Kubernetes 环境搭建 
+
+#### Docker Desktop for Mac/Win 
+
+- https://docs.docker.com/docker-for-mac/install/
+- https://docs.docker.com/docker-for-windows/install/
+- 由于开启k8S需要拉取镜像，国外比较慢，使用阿里云的 开启 Kubernetes 方法：
+  - https://github.com/AliyunContainerService/k8s-for-docker-desktop
+- 对于非 windows 10 专业版的用户，可以使用 mini k8s，进行安装：
+  - https://github.com/AliyunContainerService/minikube
+
+![1608178788382](MicroserviceSpringBootStaffjoy.assets/1608178788382.png)
+
+
+
+
+
+#### 校验 Kubernetes 安装 
+
+1. kubectl version
+2. kubectl config current-context
+3. kubectl cluster-info
+4. kubectl get nodes 
+
+![1608178823780](MicroserviceSpringBootStaffjoy.assets/1608178823780.png)
+
+
+
+#### 安装和访问 Kubernetes Dashboard 
+
+1. 安装Kubernetes Dashboard
+• https://github.com/kubernetes/dashboard
+• kubectl get pods —namespace=kube-system
+2. 启动 kube proxy
+• kubectl proxy
+3. 生成访问令牌
+• kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+4. 访问 Dashboard
+• http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/ 
+
+
+
+
+
+### 将 Staffjoy 部署到本地 Kubernetes 环境 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
