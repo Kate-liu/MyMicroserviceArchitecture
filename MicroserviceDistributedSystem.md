@@ -72,6 +72,8 @@
 - 单个事件的数据
 - 聚合数据
 
+![1608255189579](MicroserviceDistributedSystem.assets/1608255189579.png)
+
 
 
 #### 数据库选型
@@ -83,7 +85,7 @@
 - 成本
 - 学习门槛
 
-
+![1608255225209](MicroserviceDistributedSystem.assets/1608255225209.png)
 
 
 
@@ -93,7 +95,7 @@
 - 将计数服务，路由到MySQL主节点上，写入数据
 - 将查询服务，路由到MySQL从结点上，读取数据
 
-
+![1608255260243](MicroserviceDistributedSystem.assets/1608255260243.png)
 
 
 
@@ -103,7 +105,7 @@
 - 记录数据库存储配置，有一个配置注册中心
 - 分别进行计数服务和查询服务的路由
 
-
+![1608255291715](MicroserviceDistributedSystem.assets/1608255291715.png)
 
 
 
@@ -113,7 +115,7 @@
 - 仲裁写，多数写好，就表示已经写好了
 - 一致性读，多个数据中心复制备份
 
-
+![1608255314164](MicroserviceDistributedSystem.assets/1608255314164.png)
 
 
 
@@ -122,7 +124,7 @@
 - SQL数据库，表之间的关联，join
 - NOSQL数据库，数据冗余，
 
-
+![1608255372136](MicroserviceDistributedSystem.assets/1608255372136.png)
 
 
 
@@ -134,12 +136,16 @@
 - 高性能
 - 高可用
 
+![1608255400853](MicroserviceDistributedSystem.assets/1608255400853.png)
+
 
 
 #### 数据聚合（aggregation）基础
 
 - 一般采用预聚合
 - 请求pull，拉模式，引入消息队列
+
+![1608255479430](MicroserviceDistributedSystem.assets/1608255479430.png)
 
 
 
@@ -148,6 +154,8 @@
 - Kafka
 - 类似于数组，偏移量，消费指针，检查点
 - 分区，对同一个主题，开多个分区，进行消息分摊
+
+![1608255505044](MicroserviceDistributedSystem.assets/1608255505044.png)
 
 
 
@@ -158,6 +166,8 @@
 - DB writer 暂时无法写入数据到 DB 的时候，需要将数据写入 死信队列，保证数据不丢失
 - 引入 Enrich Data Cache，将数据进行缓存，字段都写上值之后，在写入到数据库
 
+![1608255531122](MicroserviceDistributedSystem.assets/1608255531122.png)
+
 
 
 #### 数据接收路径（Data Ingestion Path）
@@ -166,7 +176,7 @@
 - Counting Service，服务代理
 - Kafka
 
-
+![1608255581090](MicroserviceDistributedSystem.assets/1608255581090.png)
 
 
 
@@ -176,7 +186,7 @@
 - 容错限流，Histrix，TopK实时防爬虫
 - 消息队列的格式，json，二进制
 
-
+![1608255605252](MicroserviceDistributedSystem.assets/1608255605252.png)
 
 
 
@@ -188,6 +198,8 @@
 - 老数据归档（对象存储），2/8原则，近期数据缓存
 - 热数据，冷数据
 
+![1608255671411](MicroserviceDistributedSystem.assets/1608255671411.png)
+
 
 
 ### 技术栈选型
@@ -196,6 +208,8 @@
 
 - Counting service，计数服务
 - Query service，查询服务
+
+![1608255749951](MicroserviceDistributedSystem.assets/1608255749951.png)
 
 
 
@@ -206,6 +220,8 @@
 - Kafka
 - redis
 - cassandra，hadoop
+
+![1608255841307](MicroserviceDistributedSystem.assets/1608255841307.png)
 
 
 
@@ -231,6 +247,8 @@
 - 详细设计
 - 评估
 
+![1608255896004](MicroserviceDistributedSystem.assets/1608255896004.png)
+
 
 
 
@@ -247,14 +265,15 @@
 
 ### 参考
 
-- 
+- System Design Interview – Step By Step Guide：https://www.youtube.com/watch?v=bUHFg8CZFws
+- The System Design Primer：https://github.com/donnemartin/system-design-primer
 - Consistent Hash Implementation in Java：https://github.com/Jaskey/ConsistentHash
 
 
 
 
 
-
+## 如何设计一个简化版Kafka消息队列-拍拍贷PMQ设计演进案例
 
 
 
