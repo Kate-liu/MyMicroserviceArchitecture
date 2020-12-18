@@ -275,6 +275,84 @@
 
 ## 如何设计一个简化版Kafka消息队列-拍拍贷PMQ设计演进案例
 
+### 消息队列PMQ 2.0的项目背景
+
+#### 挑战1~PMQ 1.0（2016.8）
+
+- 一套Kafka 系统
+- 一套 redis 系统
+
+![1608302197273](MicroserviceDistributedSystem.assets/1608302197273.png)
+
+
+
+#### 挑战2
+
+- 业务驱动
+- 微服务与事件驱动架构
+
+![1608302267215](MicroserviceDistributedSystem.assets/1608302267215.png)
+
+
+
+#### 为啥不要Meta Q /Rocket MQ?
+
+- 阿里 Rocket MQ
+- 无 C# 客户端，通讯协议复杂，定制 C# 客户端非常困难
+- 复杂
+  - 依赖 ZK/ NameServer
+  - 支持事务消息
+- 代码质量一般
+
+
+
+#### 为什么不要 Kafka？
+
+- 重且复杂
+  - 消息 HA 多份拷贝存储，Leader/Follower 协议
+  - 依赖 ZK
+  - 代码复杂，Scala 写，普通研发无法深入理解，定制困难
+- 不支持企业治理功能，如Topic和业务团队关系管理等
+- 不支持高级消息队列特性，比如查消息
+- 基于文件存储，适合日志场景，业务场景需要深度定制
+- 定制 Kafka 例子
+  - https://github.com/allegro/hermes
+  - https://github.com/zalando/nakadi
+
+
+
+#### 为啥要造轮子？
+
+- 业务消息数据太关键
+- 个人原因，需要落地
+- 个人背景
+  - 携程日志采集平台
+  - 个人开源项目 bugqueue/luxun
+  - https://github.com/bulldog2011
+- 携程 Hermes/ qmq的启发
+  - https://github.com/qunarcorp/qmq
+  - https://github.com/ctripcorp/hermes
+
+
+
+
+
+#### 设计目标
+
+![1608302592162](MicroserviceDistributedSystem.assets/1608302592162.png)
+
+
+
+
+
+#### 设计限制
+
+- 消息顺序性
+  - 能保证消息顺序插入，保证相同分区的消息是顺序的（排除网络延迟），但是多个分区之间可能是乱序的
+  - 消息并行消费或者多个分区并行消费，消息消费顺序可能是乱序的
+- 消费语义
+  - At Least Once 至少一次交付
+  - 消费者挂或者重启，没有及时提交消费偏移，重启后可能接收到少量重复消息，消费者端业务方要做幂等处理
 
 
 
@@ -282,40 +360,9 @@
 
 
 
+### PMQ 2.0的设计
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#### 理解队列 Queue
 
 
 
