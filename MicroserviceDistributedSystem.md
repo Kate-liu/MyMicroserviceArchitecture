@@ -589,6 +589,584 @@
 
 #### PMQ 3.0 规划（2018）
 
+- 消费者动态重平衡(P1)
+- 调整消费偏移无需重启消费者(P1)
+- 运维治理→研发自助(P1)
+-  .Net转Java(P1)
+- 完善失败消息处理(P1)
+- 延迟消息(P2)
+- 生产者异步持久化(P2)
+- 开源(P2)
+- 灵活消息查询ELK(P3)
+- 消息轨迹可视化(P3)
+- 事务消息?(P3)
+- https://github.com/ppdaicorp/pmq
+- https://github.com/ppdaicorp/pmq/wiki
+
+
+
+#### 当前生产细节（PMQ 3.0/2020.5）
+
+- 当前15(5主+10从)个DB物理机(4Oc)，20台Broker虚拟机。
+- 一个DB节点10个库，一个库99张表，一个DB支持990个分区
+- 消息保持7天后删除老消息(定时器)
+- 单表100万消息OK，7天可支持700~1000万消息
+- 分区个数估算，先估算topic每日消息量，除以100万，例如预估日700万消息，则预分配7个分区队列。测试环境一律2个分区。
+- 日消息发送3亿，消费 6亿
+
+
+
+
+
+### Kafka的动态重平衡是如何工作的？
+
+#### Kafka Rebalance Protocol
+
+- 分布式算法：动态组成员的资源分配问题
+- Rebalance/Rebalancing: the procedure that is followed by a number of distributed processes that use Kafka clients and/or the Kafka coordinator to form a common group and distributea set of resources among the member of the group (source :lncremental Cooperative Rebalancing: Support and Policies)
+
+
+
+#### 分区-消费者场景
+
+- 对不同的分区，根据消费者的个数，动态分配
+
+![1608362893189](MicroserviceDistributedSystem.assets/1608362893189.png)
+
+
+
+#### Kafka 重平衡协议和组件
+
+- 自定义实现重平衡协议
+
+![1608362965273](MicroserviceDistributedSystem.assets/1608362965273.png)
+
+
+
+#### Protocol：JoinGroup Request
+
+- 选出协调者 Coordinator，保证确定消费者的状态，组织消费者
+
+![1608363083449](MicroserviceDistributedSystem.assets/1608363083449.png)
+
+
+
+#### Protocol：JoinGroup Response
+
+- 协调者 Coordinator 等一会，类似于屏障（barrier），
+- 当消费者不变的时候，再从消费者中选出一个 Leader
+
+![1608363154029](MicroserviceDistributedSystem.assets/1608363154029.png)
+
+
+
+#### Protocol：SyncGroup Request
+
+- 进行不同分区的请求
+
+![1608363292631](MicroserviceDistributedSystem.assets/1608363292631.png)
+
+
+
+#### Protocol：SyncGroup Response
+
+- 进行不同分区的响应
+
+![1608363322377](MicroserviceDistributedSystem.assets/1608363322377.png)
+
+
+
+#### Protocol：Heartbeat
+
+- 心跳检测，保证服务正常
+
+![1608363392910](MicroserviceDistributedSystem.assets/1608363392910.png)
+
+
+
+
+
+#### Protocol：LeaveGroup
+
+- stop the world 效应
+- 当有消费者离开消费组的时候，全部消费者停止消费，重新进行分配，重新进行分配周期
+
+![1608363475509](MicroserviceDistributedSystem.assets/1608363475509.png)
+
+
+
+#### Rebalance
+
+- 当经过了充分分配的周期之后，进入了新的平衡状态
+
+![1608363575569](MicroserviceDistributedSystem.assets/1608363575569.png)
+
+
+
+#### JoinGroup Again
+
+- 当某个消费者，又连接成功到 coordinator的时候
+- 重新进行分区与消费者分配，再一次 Stop the world
+
+![1608363689530](MicroserviceDistributedSystem.assets/1608363689530.png)
+
+
+
+#### Timeout
+
+- 根据两个参数判断，消费者是否死掉
+
+![1608363742577](MicroserviceDistributedSystem.assets/1608363742577.png)
+
+
+
+#### Kafka 重平衡优化
+
+- Static Membership
+- Incremental Cooperative Rebalabcing
+- Apache Kafka Rebalance Protocol, or the magic behind your streams applications：https://medium.com/streamthoughts/apache-kafka-rebalance-protocol-or-the-magic-behind-your-streams-applications-e94baf68e4f2
+
+
+
+#### 动态重平衡 in PMQ 3.0
+
+- 简化版动态重平衡
+
+![1608364516550](MicroserviceDistributedSystem.assets/1608364516550.png)
+
+
+
+### 消息队列设计和治理最佳实践
+
+#### 推Push vs 拉Pull
+
+- 推，Broker 有状态，客户端简单
+- 拉，Broker 无状态，将复杂性放在消费端
+
+![1608359886431](MicroserviceDistributedSystem.assets/1608359886431.png)
+
+
+
+#### 泳道和舱壁隔离
+
+- 隔离，功能与业务
+- Hystrics
+
+![1608365171364](MicroserviceDistributedSystem.assets/1608365171364.png)
+
+
+
+#### 延迟 vs 吞吐
+
+![1608365203911](MicroserviceDistributedSystem.assets/1608365203911.png)
+
+
+
+#### 动态重平衡协议
+
+![1608363154029](MicroserviceDistributedSystem.assets/1608363154029.png)
+
+
+
+#### 核心基础设施要自研 or 定制
+
+- PMQ 2.0  是简化版的 Kafka
+
+|                | PMQ 2.0                                       | Kafka                        |
+| -------------- | --------------------------------------------- | ---------------------------- |
+| 队列持久化     | MySQL                                         | 文件                         |
+| 通讯层         | Thrift                                        | 定制NIO协议                  |
+| 元数据分区管理 | MySQL+静态分配                                | ZK动态管理                   |
+| 消费者负载均衡 | 通过ip+进程号竞争分配 （1 consumer <> 1 queue | 动态重平衡                   |
+| 消费状态存储   | 客户端+MySQL                                  | 客户端+ZK或Broker            |
+| 消息HA         | 依赖MySQL HA                                  | 在不同Broker上存多份消息拷贝 |
+
+
+
+#### MQ 治理最佳实践
+
+- 研发自助治理
+  - 主题/分区申请，扩容，监控
+- 堆积(lag)监控告警
+- 动态偏移调整
+- 失败消息处理
+  - 死信(dead letter)队列
+- 线上测试+监控
+  - https://github.com/linkedin/kafka-monitor
+
+
+
+## 如何解决微服务的数据一致性和事务问题
+
+### 微服务的四大技术难题是什么？
+
+#### 微服务四大技术难题
+
+> 最难的部分和数据（状态）有关
+
+- 数据一致性分发
+- 数据聚合Join
+- 分布式事务
+- 单体系统解耦拆分
+
+![1608365934145](MicroserviceDistributedSystem.assets/1608365934145.png)
+
+
+
+### 如何解决微服务的数据一致性分发问题？
+
+#### 为啥要分发数据？场景？
+
+- 更新缓存
+- 同步到其他服务
+- 同步到搜索引擎
+- 同步到数据仓库
+- 数据复制（replication）
+- 支持数据库拆分迁移
+- 实现CQRS/去数据库Join
+- 实现分布式事务 
+- 流计算
+- 大数据BI/AI
+- 审计日志，历史归档
+
+![1608373971899](MicroserviceDistributedSystem.assets/1608373971899.png)
+
+
+
+#### 双写？
+
+- 双写的时候，如何保证事务性？
+
+![1608374022625](MicroserviceDistributedSystem.assets/1608374022625.png)
+
+
+
+
+
+#### 模式一：事务性发件箱（Transactional Outbox）
+
+- 保证两个动作的事务性
+- 需要在 MQ 实现 幂等性
+
+![1608374065703](MicroserviceDistributedSystem.assets/1608374065703.png)
+
+
+
+#### Transactional Outbox 参考实现~Killbill Common Queue
+
+- 基于集中式数据库实现
+- https://github.com/killbill/killbill-commons/tree/master/queue
+
+![1608374159420](MicroserviceDistributedSystem.assets/1608374159420.png)
+
+
+
+#### Reaper机制
+
+- 收割机线程，Reaper
+- 查看无人处理的任务，标记为自己的任务，保证高可用
+- https://github.com/killbill/killbill-commons/tree/master/queue
+
+![1608374210482](MicroserviceDistributedSystem.assets/1608374210482.png)
+
+
+
+#### Killbill PersistentBus表结构
+
+- https://github.com/killbill/killbill-commons/blob/master/queue/src/main/resources/org/killbill/queue/ddl.sql
+
+![1608374370013](MicroserviceDistributedSystem.assets/1608374370013.png)
+
+
+
+#### Killbill PersistentBus处理状态迁移
+
+- 处理状态的状态图
+- 有失误状态重试最大次数
+
+![1608374397396](MicroserviceDistributedSystem.assets/1608374397396.png)
+
+
+
+#### 模式二：变更数据捕获（Change Data Capture，CDC）
+
+- 使用变更的日志，进行捕获
+- 实现两个事件的事务
+
+![1608374456585](MicroserviceDistributedSystem.assets/1608374456585.png)
+
+
+
+#### CDC开源项目（企业级）
+
+- 推荐生产使用，阿里 Canal
+- https://github.com/alibaba/canal
+- Redhat Debezium
+- https://github.com/debezium/debezium
+- Zzendesk Maxwell
+- https://github.com/zendesk/maxwell
+- Airbnb SpinalTap
+- https://github.com/airbnb/SpinalTap
+
+![1608374544196](MicroserviceDistributedSystem.assets/1608374544196.png)
+
+
+
+
+
+#### 学习参考~Eventuate-Tram
+
+- 微服务架构设计模式
+- http://www.chrisrichardson.net/
+- https://eventuate.io/
+
+![1608374921366](MicroserviceDistributedSystem.assets/1608374921366.png)
+
+
+
+#### Transactional Outbox vs CDC
+
+|                   | Transaction Outbox     | CDC                              |
+| ----------------- | ---------------------- | -------------------------------- |
+| 复杂性            | 相对简单               | 复杂（高可用/监控）              |
+| Pulling延迟和开销 | 近实时，有一定性能开销 | 较实时，性能开销小               |
+| 应用侵入性        | 有                     | 无                               |
+| 适合场合          | 早期/中小规模          | 中大规模，有独立框架团队治理维护 |
+
+
+
+#### Single Source of Truth
+
+- 也称Single System of Record
+  - 某一个服务是某些数据的唯一主人
+  - 该服务是数据的权威记录系统(canonical system of record)
+  - 其它的数据拷贝都是只读，非权威的缓存(read-only, non-authoritative cache)
+
+![1608375164408](MicroserviceDistributedSystem.assets/1608375164408.png)
+
+
+
+### 如何解决微服务的数据聚合Join问题？
+
+#### 单库Join的问题
+
+- join 会引入 笛卡尔积等
+
+![1608376126838](MicroserviceDistributedSystem.assets/1608376126838.png)
+
+
+
+#### 分布式聚合Join的问题
+
+- 聚合层（Aggregator），BFF（Backend for Frontend）层
+- N+1问题，一个数据库查一次，一个数据库查n次
+- 数据量问题
+- 性能开销问题
+
+![1608376219808](MicroserviceDistributedSystem.assets/1608376219808.png)
+
+
+
+#### Denormalize + Materialize the View
+
+- 数据分发技术
+- 反正规化 + 物化视图
+- 预聚合技术
+
+![1608376256075](MicroserviceDistributedSystem.assets/1608376256075.png)
+
+
+
+#### CQRS（Command Query ）模式
+
+- 服务层的读写模式
+- 命令查询的责任分离 Command Query Responsibility Segregation (简称CQRS)
+
+![1608376361264](MicroserviceDistributedSystem.assets/1608376361264.png)
+
+
+
+#### CQRS 和最终一致性
+
+- UI 更新问题
+- At Least Once 语义
+  - 客户端幂等
+- 最终一致性，引入时间差问题
+
+![1608376420058](MicroserviceDistributedSystem.assets/1608376420058.png)
+
+
+
+#### CQRS 和 UI 更新策略
+
+- 乐观更新 Optimistic update
+- 拉模式 Pull
+- 发布订阅模式 Publish-subscribu
+
+![1608376490100](MicroserviceDistributedSystem.assets/1608376490100.png)
+
+
+
+#### 网站架构 2005 vs 2016
+
+- 2016 年架构只是在 2005年的基础上变得更加复杂而已，种类更多，基本流程还是没有变化的
+
+![1608376567328](MicroserviceDistributedSystem.assets/1608376567328.png)
+
+
+
+### 如何解决微服务的分布式事务问题？
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
