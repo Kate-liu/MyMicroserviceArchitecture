@@ -364,35 +364,83 @@
 
 #### 理解队列 Queue
 
+- 入队，出队
+- 头指针，尾指针
+- https://github.com/bulldog2011/bigqueue
+
+![1608352437701](MicroserviceDistributedSystem.assets/1608352437701.png)
+
+
+
+#### Queue 和 Topic（Fanout）语义
+
+-  不同的头指针，Fanout
+
+![1608352526158](MicroserviceDistributedSystem.assets/1608352526158.png)
+
+
+
+#### 核心概念模型
+
+- 对 Queue 进行分区（Partution）
+- 生产者与消费者关系
+
+![1608352639474](MicroserviceDistributedSystem.assets/1608352639474.png)
 
 
 
 
 
+#### 理解消费者组
+
+- Consumer Group
+- 消费组之间互不影响，消费进度各不相同
+- 限定，每一个消费者组中的消费者，不能消费同一个Topic的同一个Partition
+
+![1608352740442](MicroserviceDistributedSystem.assets/1608352740442.png)
 
 
 
 
 
+#### 存储设计
+
+- 数据结点 DataNode（数据库），创建 Patation（数据库表）
+- 绑定到Topic
+- 最多 99个 Patation
+
+![1608352817851](MicroserviceDistributedSystem.assets/1608352817851.png)
 
 
 
+#### 分区队列实现
+
+- 使用数据库实现
+- 数据库表字段，自增主键，索引
+
+![1608352867488](MicroserviceDistributedSystem.assets/1608352867488.png)
 
 
 
+#### 元数据模型
+
+- 数据之间的关系
+
+![1608352883088](MicroserviceDistributedSystem.assets/1608352883088.png)
 
 
 
+#### PMQ 2.0 总体架构
+
+- Broker 节点，是无状态的，按需扩展
+
+![1608352948835](MicroserviceDistributedSystem.assets/1608352948835.png)
 
 
 
+#### PMQ 2.0 服务发现
 
-
-
-
-
-
-
+![1608353040481](MicroserviceDistributedSystem.assets/1608353040481.png)
 
 
 
