@@ -1017,77 +1017,174 @@
 
 ### 如何解决微服务的分布式事务问题？
 
+#### 单机DB事务 -> 分布式事务
 
+- 订单表与库存表，一个事务保证操作没错
 
+![1608387865746](MicroserviceDistributedSystem.assets/1608387865746.png)
 
 
 
+#### ACID事务保证
 
+- 原子性 Atomicity
+- 一致性 Consistency
+- 隔离性 Isolation
+- 持久性 Durability
 
+![1608387921391](MicroserviceDistributedSystem.assets/1608387921391.png)
 
 
 
+#### 事务隔离级别
 
+- 读未提交 Read Uncommited
+- 读已提交 Read Committed
+- 可重复读 Repeatable Reads（MySQL默认隔离级别）
+- 串行化  Serializable
+- 分布式事务从0到1-认识分布式事务：https://www.codingapi.com/blog/2020/01/01/txlcn001/
 
+![1608387991801](MicroserviceDistributedSystem.assets/1608387991801.png)
 
 
 
+#### 2PC/XA（两阶段提交）
 
+- 两阶段事务
+- 第一阶段，准备阶段
+- 第二阶段，提交事务，或者回滚事务
+- XA，分布式两阶段提交，一个二阶段提交协议的规范
+- 阿里 Seate 是一种优化版 2PC
 
+![1608388332042](MicroserviceDistributedSystem.assets/1608388332042.png)
 
 
 
+#### 2PC 样例
 
+- 基于 Atomikos 实现股票交易分布式事务
+- 分布式事务样例：Atomikos + Spring + MySQL + ActiveMQ + DerbySpring
+- 事务传播行为：https://github.com/Apress/practical-microservices-architectural-patterns/tree/master/Christudas_Ch13_Source/ch13/ch13-01/XA-TX-Distributed
 
+![1608388401649](MicroserviceDistributedSystem.assets/1608388401649.png)
 
 
 
+#### TCC
 
+- 一种2PC变体， 约等于 应用层/服务层 2PC
+- 另一种分布式事务解决方案
+- TCC 简化流程，每一个服务需要实现三个接口，Try接口，confirm接口，Cancel接口
 
+![1608388572524](MicroserviceDistributedSystem.assets/1608388572524.png)
 
 
 
+#### CAP 原理
 
+- 系统分区之后，无法同时满足A与C
+- CAP：一致性（Consistency）、可用性（Availability）、分区容错性（Partition tolerance）
 
+![1608389678704](MicroserviceDistributedSystem.assets/1608389678704.png)
 
 
 
+#### 成年人不用分布式事务（2PC）
 
+- Life Beyond Distributed Transactions -  An apostate's opinion
+- 超越分布式事务 - 一个反叛者的观点
+- https://queue.acm.org/detail.cfm?id=3025012
 
+![1608389813674](MicroserviceDistributedSystem.assets/1608389813674.png)
 
 
 
+#### 微服务时代的事务处理原则
 
+> Saga  模式，分布式事务的解决方案
+>
+> - 将全局事务建模成一组本地ACID事务
+> - 引入事务补偿机制处理失败场景
 
+- 假定网络或者服务不可靠
+- 将全局事务建模成一组本地ACID事务
+- 引入事务补偿机制处理失败场景
+- 事务始终处在一种明确的状态(不管成功还是失败)
+- 最终一致
+- 考虑隔离性
+- 考虑幂等性
+- 异步响应式，尽量避免直接同步调用
 
 
 
+#### 购物场景状态机（简化）
 
+- 简化事务状态机
+- 状态机有明确的状态迁移方案
 
+![1608389905489](MicroserviceDistributedSystem.assets/1608389905489.png)
 
 
 
+#### 协同式（Choreography）Saga
 
+- 发消息模式
 
+![1608389924425](MicroserviceDistributedSystem.assets/1608389924425.png)
 
 
 
+#### 编排式（Orchestration）Saga
 
+- 有一个编排者，让后续系统，创建事务，做什么事
+- 集中的方式
 
+![1608389935174](MicroserviceDistributedSystem.assets/1608389935174.png)
 
 
 
+#### 补偿样例1
 
+![1608389989501](MicroserviceDistributedSystem.assets/1608389989501.png)
 
 
 
+#### 补偿样例2
 
+![1608390003586](MicroserviceDistributedSystem.assets/1608390003586.png)
 
 
 
+#### 协同式（Choreography）vs 编排式（Orchestration）
 
+- 协同式（Choreography），适合小系统
+- 编排式（Orchestration），适合大系统，扩展方便
+- 芭蕾舞 vs 交响乐
 
+![1608390038636](MicroserviceDistributedSystem.assets/1608390038636.png)
 
+
+
+#### Saga不保证隔离性
+
+- 语义锁
+- 更多办法参考《微服务架构设计模式》，包括Saga
+
+![1608390060820](MicroserviceDistributedSystem.assets/1608390060820.png)
+
+
+
+#### 相关概念
+
+- Saga 引擎
+- 微服务编排引擎（Orchestrator）/协调器（Coordinator）
+- 工作流引擎
+- 状态机引擎
+- 分布式事务中间件
+
+
+
+### 阿里分布式事务中间件Seata简析
 
 
 
