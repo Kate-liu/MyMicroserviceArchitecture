@@ -1966,71 +1966,173 @@
 
 #### Thrift IDL
 
+- ASP.NET state server Protocol
+- https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-asp/83f6b453-c695-419c-998b-0aa50279bc40
+- Thrift  二进制的通讯协议
 
+![1608473690052](MicroserviceDistributedSystem.assets/1608473690052.png)
 
 
 
+#### 关键设计问题
 
+- SessionID和SessionSever映射关系?
+  - 分布式 KV Store
+  -  一致性Hash? Raft?
+- SessionServer挂了怎么办?
+- 升级扩容?
+- 服务发现?
 
+![1608473928547](MicroserviceDistributedSystem.assets/1608473928547.png)
 
 
 
+#### SessionServer  总体架构
 
+- 将 SessionServer  的 IP 进行来回传递，记录在浏览器的Cookie中
+- SessionServer  将 Session数据，异步写到数据库
+- SessionServer 出问题，Session client 会检测到，选择另一个 SessionServer  完成服务
 
+![1608473961431](MicroserviceDistributedSystem.assets/1608473961431.png)
 
 
 
+#### SessionServer 内部设计
 
+- 将热集的Session，存储在内存中
+- 根据最近最少访问原则，将Session踢出到二级缓存
 
+![1608474014121](MicroserviceDistributedSystem.assets/1608474014121.png)
 
 
 
+#### Workflow ~ 第一次请求处理
 
+![1608474033706](MicroserviceDistributedSystem.assets/1608474033706.png)
 
 
 
+#### Workflow ~ 后续读请求
 
+![1608474071263](MicroserviceDistributedSystem.assets/1608474071263.png)
 
 
 
+#### Workflow ~ 后续写请求
 
+![1608474095326](MicroserviceDistributedSystem.assets/1608474095326.png)
 
 
 
+#### Workflow ~ 后续读失败
 
+![1608474145178](MicroserviceDistributedSystem.assets/1608474145178.png)
 
 
 
+#### Workflow ~ 后续写失败
 
+![1608474158418](MicroserviceDistributedSystem.assets/1608474158418.png)
 
 
 
+#### 跨数据中心 HA ~ 摇摆策略
 
+- 两个数据中心互通
+- 使用 euraka 实现，数据中心之间可以相互通信
+- 保证请求到达任何一个数据中心，都可以找到对应的session
 
+![1608474225742](MicroserviceDistributedSystem.assets/1608474225742.png)
 
 
 
+#### 跨数据中心 HA ~ 双写策略
 
+- 在 Session 写入的时候，同时写到本地的 SessionServer和另一个数据中心的 SessionServer
+- 使用 Memcached 实现缓存
+- https://github.com/Netflix/EVCache
 
+![1608474274916](MicroserviceDistributedSystem.assets/1608474274916.png)
 
 
 
+#### 优化和 x-pipe
 
+- 后端存储使用缓存（redis）实现，性能优于 MySQL
+- 携程 x-pipe，基于 Master-Slave 协议，实现跨数据中心同步数据
+- https://github.com/ctripcorp/x-pipe
 
+![1608474327970](MicroserviceDistributedSystem.assets/1608474327970.png)
 
 
 
 
 
+### 如何设计一个高性能基于内存的 LRU Cache
 
+#### 术语
 
 
 
+#### 面试题：如何设计一个LRU 缓存
 
+##### LRU Cache 原理
 
+- 头结点就是下一个被剔除的对象
 
 
 
+##### LRU Cache 实现 V1
+
+- Node
+- 
+- https://github.com/spring2go/okcache/tree/master/src/main/java/com/spring2go/lrucache/v1
+
+
+
+
+
+#### 面试题：如何设计一个线程安全的LRU 缓存
+
+##### LRU Cache 实现 V2
+
+- 
+- https://github.com/spring2go/okcache/tree/master/src/main/java/com/spring2go/lrucache/v2
+
+
+
+#### 面试题：如何设计一个线程安全和高并发的LRU 缓存
+
+##### LRU Cache 实现 V3
+
+- concurrentHashmap的两阶段分段锁机制
+- 类似于分片 Shareding 操作
+- 
+- https://github.com/spring2go/okcache/tree/master/src/main/java/com/spring2go/lrucache/v3
+
+
+
+#### SessionServer LRU Cache 
+
+- 基于Guava Cache改造简化
+- 核心思想类似LRUCache实现V3
+  - 双端队列Deque
+  - 分段锁+锁优化
+- 支持过期清除
+- 支持超过容量剔除到本地可持久化缓存（BigCache)
+- 剔除由get/put操作触发，无需后台线程
+- 支持写回到后端持久化存储（DB)
+- 埋点统计
+- https://github.com/spring2go/okcache/tree/master/src/main/java/com/spring2go/okcache
+
+
+
+#### Caffeine （生产推荐）
+
+- Guava Cache的升级版
+- window TinyLFU
+- 高并发RingBuffer
+- https://github.com/ben-manes/caffeine
 
 
 
