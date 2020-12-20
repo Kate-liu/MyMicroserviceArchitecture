@@ -2072,6 +2072,23 @@
 
 #### 术语
 
+| Cache Hit      | 缓存命中     |
+| -------------- | ------------ |
+| Cache Miss     | 缓存不命中   |
+| Cache Capacity | 缓存容量     |
+| LRU            | 最近最少使用 |
+| LFU            | 最不经常使用 |
+| Expiration     | 缓存过期     |
+| Eviction       | 缓存剔除     |
+| Purge          | 缓存清理     |
+| Activate       | 缓存激活加载 |
+| Write Behind   | 写后         |
+| Write Through  | 写穿透       |
+
+
+
+![1608474014121](MicroserviceDistributedSystem.assets/1608474014121.png)
+
 
 
 #### 面试题：如何设计一个LRU 缓存
@@ -2080,13 +2097,116 @@
 
 - 头结点就是下一个被剔除的对象
 
+缺一张图
+
 
 
 ##### LRU Cache 实现 V1
 
 - Node
-- 
+- removeNode()
+- offerNode()
+- put()
+- get()
 - https://github.com/spring2go/okcache/tree/master/src/main/java/com/spring2go/lrucache/v1
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * LruCache实现，V1版本，线程不安全
+ * <p>
+ * Created on Jul, 2020 by @author bobo
+ */
+public class LruCacheV1<K, V> {
+
+    private int maxCapacity;
+    private Map<K, Node<K, V>> map;
+    private Node<K, V> head, tail;
+
+    private static class Node<K, V> {
+        private V value;
+        private K key;
+        private Node<K, V> next, prev;
+
+        public Node(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return value.toString();
+        }
+    }
+
+    // 从双向链表中移除一个节点
+    private void removeNode(Node<K, V> node) {
+        if (node == null) return;
+
+        if (node.prev != null) {
+            node.prev.next = node.next;
+        } else {
+            head = node.next;
+        }
+
+        if (node.next != null) {
+            node.next.prev = node.prev;
+        } else {
+            tail = node.prev;
+        }
+    }
+
+    // 向双向链表的尾部添加一个节点
+    private void offerNode(Node<K, V> node) {
+        if (node == null) return;
+
+        if (head == null) {
+            head = tail = node;
+        } else {
+            tail.next = node;
+            node.prev = tail;
+            node.next = null;
+            tail = node;
+        }
+    }
+
+    public LruCacheV1(final int maxCapacity) {
+        this.maxCapacity = maxCapacity;
+        map = new HashMap<>();
+    }
+
+    public void put(K key, V value) {
+        if (map.containsKey(key)) {
+            Node<K, V> node = map.get(key);
+            node.value = value;
+            removeNode(node);
+            offerNode(node);
+        } else {
+            if (map.size() == maxCapacity) {
+                map.remove(head.key);
+                removeNode(head);
+            }
+            Node<K, V> node = new Node<>(key, value);
+            offerNode(node);
+            map.put(key, node);
+        }
+    }
+
+    public V get(K key) {
+        Node<K, V> node = map.get(key);
+        if (node == null) return null;
+        removeNode(node);
+        offerNode(node);
+        return node.value;
+    }
+
+    public int size() {
+        return map.size();
+    }
+}
+```
 
 
 
@@ -2096,8 +2216,129 @@
 
 ##### LRU Cache 实现 V2
 
-- 
+- ReentrantReadWriteLock()
 - https://github.com/spring2go/okcache/tree/master/src/main/java/com/spring2go/lrucache/v2
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+/**
+ * LruCache实现，V1版本，线程安全
+ *
+ * Created on Jul, 2020 by @author bobo
+ */
+public class LruCacheV2<K, V> {
+    private int maxCapacity;
+    private Map<K, Node<K, V>> map;
+    private Node<K, V> head, tail;
+
+    private ReadWriteLock lock = new ReentrantReadWriteLock();
+    private Lock writeLock = lock.writeLock();
+    private Lock readLock = lock.readLock();
+
+    private static class Node<K, V> {
+        private V value;
+        private K key;
+        private Node<K, V> next, prev;
+
+        public Node(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return value.toString();
+        }
+    }
+
+    // 从双向链表中移除一个节点
+    private void removeNode(Node<K, V> node) {
+        if (node == null) return;
+
+        if (node.prev != null) {
+            node.prev.next = node.next;
+        } else {
+            head = node.next;
+        }
+
+        if (node.next != null) {
+            node.next.prev = node.prev;
+        } else {
+            tail = node.prev;
+        }
+    }
+
+    // 向双向链表的尾部添加一个节点
+    private void offerNode(Node<K, V> node) {
+        if (node == null) return;
+
+        if (head == null) {
+            head = tail = node;
+        } else {
+            tail.next = node;
+            node.prev = tail;
+            node.next = null;
+            tail = node;
+        }
+    }
+
+    public LruCacheV2(final int maxCapacity) {
+        this.maxCapacity = maxCapacity;
+        map = new HashMap<>();
+    }
+
+    public void put(K key, V value) {
+        writeLock.lock();
+        try {
+            if (map.containsKey(key)) {
+                Node<K, V> node = map.get(key);
+                node.value = value;
+                removeNode(node);
+                offerNode(node);
+            } else {
+                if (map.size() >= maxCapacity) {
+                    map.remove(head.key);
+                    removeNode(head);
+                }
+                Node<K, V> node = new Node<>(key, value);
+                offerNode(node);
+                map.put(key, node);
+            }
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    public V get(K key) {
+        writeLock.lock();
+        try {
+            Node<K, V> node = map.get(key);
+            if (node == null) return null;
+            removeNode(node);
+            offerNode(node);
+            return node.value;
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    public int size() {
+        readLock.lock();
+        try {
+            return map.size();
+        } finally {
+            readLock.unlock();
+        }
+    }
+}
+```
+
+
 
 
 
@@ -2107,8 +2348,67 @@
 
 - concurrentHashmap的两阶段分段锁机制
 - 类似于分片 Shareding 操作
-- 
+- cacheSegments
 - https://github.com/spring2go/okcache/tree/master/src/main/java/com/spring2go/lrucache/v3
+
+```java
+/**
+ *  LruCache实现，V3版本，线程安全+高并发
+ *
+ * Created on Jul, 2020 by @author bobo
+ */
+public class LruCacheV3<K, V> {
+
+    private LruCacheV2<K, V>[] cacheSegments;
+
+    public LruCacheV3(final int maxCapacity) {
+        int cores = Runtime.getRuntime().availableProcessors();
+        int concurrency = cores < 2 ? 2 : cores;
+        cacheSegments = new LruCacheV2[concurrency];
+        int segmentCapacity = maxCapacity / concurrency;
+        if (maxCapacity % concurrency == 1) segmentCapacity++;
+        for (int index = 0; index < cacheSegments.length; index++) {
+            cacheSegments[index] = new LruCacheV2<>(segmentCapacity);
+        }
+    }
+
+    public LruCacheV3(final int concurrency, final int maxCapacity) {
+        cacheSegments = new LruCacheV2[concurrency];
+        int segmentCapacity = maxCapacity / concurrency;
+        if (maxCapacity % concurrency == 1) segmentCapacity++;
+        for (int index = 0; index < cacheSegments.length; index++) {
+            cacheSegments[index] = new LruCacheV2<>(segmentCapacity);
+        }
+    }
+
+    private int segmentIndex(K key) {
+        int hashCode = Math.abs(key.hashCode() * 31);
+        return hashCode % cacheSegments.length;
+    }
+
+    private LruCacheV2<K, V> cache(K key) {
+        return cacheSegments[segmentIndex(key)];
+    }
+
+    public void put(K key, V value) {
+        cache(key).put(key, value);
+    }
+
+    public V get(K key) {
+        return cache(key).get(key);
+    }
+
+    public int size() {
+        int size = 0;
+        for (LruCacheV2<K, V> cache : cacheSegments) {
+            size += cache.size();
+        }
+        return size;
+    }
+}
+```
+
+
 
 
 
@@ -2136,31 +2436,51 @@
 
 
 
+缺一张图
+
+
+
+### 如何设计一个高性能大容量持久化的ConcurrentHashmap
+
+#### 会话缓存溢出问题
+
+- 二级缓存只追求容量
+
+
+
+#### 可持久化的ConcurrentHashmap ~ BigCache
+
+- 更新操作，删除多了，会有存储空洞，垃圾碎片，Cleaning Threads 实现清理
+- https://github.com/spring2go/okcache/tree/master/src/main/java/com/spring2go/bigcache
 
 
 
 
 
+#### Yahoo HaloDB
+
+- 
+- https://github.com/yahoo/HaloDB
+
+
+
+### 设计评估和总结
+
+#### 设计评估
 
 
 
 
 
+#### Hystrix 限流容错
 
 
 
+#### 生产性能监控
 
 
 
-
-
-
-
-
-
-
-
-
+#### 最佳实践
 
 
 
