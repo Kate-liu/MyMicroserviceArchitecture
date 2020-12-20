@@ -1584,6 +1584,804 @@
 
 #### 什么时候该解耦拆分？
 
+- 研发速度(Velocity)
+  - 单体耦合系统造成交付效率低下
+  - 团队间相互依赖，无法独立交付
+  - 新人上手产出很慢
+- 扩展(Scaling)
+  - 无法再对单体系统进行垂直(vertical)扩展
+  - 系统的某些部分需要独立扩展能力
+- 部署(Deployment)
+  - 系统的某些部分需要独立部署的能力
+  - 单体发布太慢、太复杂、风险太高
+
+![1608455897847](MicroserviceDistributedSystem.assets/1608455897847.png)
+
+
+
+#### 共享单体 DB ~ StichFix 案例
+
+- GeeCON 2019: Randy Shoup - Scaling yout Architecture with Services and Events
+- https://www.youtube.com/watch?v=zVJSTMD6zg0
+
+![1608456114118](MicroserviceDistributedSystem.assets/1608456114118.png)
+
+
+
+#### 解耦拆分案例场景
+
+![1608456152527](MicroserviceDistributedSystem.assets/1608456152527.png)
+
+
+
+#### 步骤1：创建一个新服务
+
+![1608456186383](MicroserviceDistributedSystem.assets/1608456186383.png)
+
+
+
+#### 步骤2：应用走服务调用
+
+![1608456220538](MicroserviceDistributedSystem.assets/1608456220538.png)
+
+
+
+#### 不要停在步骤2
+
+- 所有分布式系统的问题
+- 所有共享DB的问题
+- 没有获得微服务的任何好处
+
+![1608456330065](MicroserviceDistributedSystem.assets/1608456330065.png)
+
+
+
+#### 步骤3：迁移到独立DB
+
+![1608456359118](MicroserviceDistributedSystem.assets/1608456359118.png)
+
+
+
+#### 步骤4：继续拆分服务
+
+![1608456395552](MicroserviceDistributedSystem.assets/1608456395552.png)
+
+
+
+#### 步骤5：继续拆分服务
+
+![1608456423612](MicroserviceDistributedSystem.assets/1608456423612.png)
+
+
+
+
+
+#### 完成
+
+- 基础领域服务，独立数据源
+
+![1608456479309](MicroserviceDistributedSystem.assets/1608456479309.png)
+
+
+
+
+
+### 拍拍贷系统拆分项目案例
+
+#### 拆分前
+
+问题：
+
+- 所有数据在同一台数据库服务器上
+- 应用可以不通过接口直接访问数据
+- 跨库join严重，单点问题
+- CPU时常飙高
+- 磁盘空间吃紧
+- QPS > 4w+(正常1w左右)
+
+![1608457254391](MicroserviceDistributedSystem.assets/1608457254391.png)
+
+![1608457298940](MicroserviceDistributedSystem.assets/1608457298940.png)
+
+
+
+#### 拆分后
+
+- 所有应用访问数据库，全部通过服务接口 api
+
+![1608457341877](MicroserviceDistributedSystem.assets/1608457341877.png)
+
+
+
+#### 拆分技术1 ~ 接口收口
+
+![1608457356933](MicroserviceDistributedSystem.assets/1608457356933.png)
+
+
+
+#### 收口沟通
+
+![1608457377826](MicroserviceDistributedSystem.assets/1608457377826.png)
+
+
+
+#### 拆分技术2 ~ 数据库迁移
+
+- 写新DB，读写老DB，数据补偿
+- 读写新DB，读写老DB，数据对比
+- 读写新DB，写老DB
+- 读写新DB，不操作老DB
+- 使用 Apollo 配置中心开关
+
+![1608457398214](MicroserviceDistributedSystem.assets/1608457398214.png)
+
+
+
+#### DB 监控
+
+![1608457425578](MicroserviceDistributedSystem.assets/1608457425578.png)
+
+
+
+#### 迁移技术3 ~ 数据分发去 Join
+
+- 服务层双写
+- 分发器，将数据推到相关的业务库中
+- MQ，是 消息队列PMQ
+
+![1608457474463](MicroserviceDistributedSystem.assets/1608457474463.png)
+
+
+
+#### 拆分迁移关键步骤小节
+
+- 接口收口
+- 双写迁移 DB
+  - 增量可回滚
+  - 数据补偿+对比
+- 数据分发去 Join
+- 计划 + 梳理 + 沟通  + 监控
+
+
+
+### CQRS / CDC 技术在 Netflix 的实践
+
+#### 数据同步和填充平台 Delta
+
+- An eventual consistent, event driven, data synchronization and enrichment platform.
+- 基于CDC/CQRS模式
+- 场景需求
+  - 搜索引擎
+  - 数据仓库
+  - 事件驱动工作流
+- 现有解决办法的问题
+  - 双写
+    - 需要后台修复程序才能保持一致性
+    - 延迟+开销
+  - 事务性发件箱+Polling
+    - 多语言环境，难以提供标准库
+    - 应用侵入性
+  - 分布式事务XA
+    - 性能和死锁问题
+    - 某些系统如ES不支持XA
+
+
+
+#### 使用  Delta 之前的 Movice Search
+
+- 查询数据 Movie Service DB
+- 数据填充，Deal Service，Talent Service ......
+
+![1608458387863](MicroserviceDistributedSystem.assets/1608458387863.png)
+
+
+
+#### 使用  Delta 之后的 Movice Search
+
+- 使用CDC，捕获数据库的变更记录
+
+![1608458411208](MicroserviceDistributedSystem.assets/1608458411208.png)
+
+
+
+#### 整体架构
+
+![1608458437890](MicroserviceDistributedSystem.assets/1608458437890.png)
+
+
+
+#### DB Log
+
+- CDC 自研产品
+- 功能亮点
+  - 数据顺序性
+    - 全量或部分Dump
+    - CDC和Dump可以交替进行
+    - 不锁表
+    - 各种输出源
+    - 高可用部署
+
+![1608458512454](MicroserviceDistributedSystem.assets/1608458512454.png)
+
+
+
+#### 参考资料
+
+- Delta: A Data Synchronization and Enrichment Platform
+- https://netflixtechblog.com/delta-a-data-synchronization-and-enrichment-platform-e82c36a79aee
+- DBLog:A Generic Change-Data-Capture Framework
+- https://netflixtechblog.com/dblog-a-generic-change-data-capture-framework-69351fb9099b
+- Capturing Data Evolution in a Service Oriented Architecture
+- https://medium.com/airbnb-engineering/capturing-data-evolution-in-a-service-oriented-architecture-72f7c643ee6f
+
+
+
+### 小结
+
+#### 微服务的四大技术难题
+
+![1608365934145](MicroserviceDistributedSystem.assets/1608365934145.png)
+
+
+
+#### 如何解决微服务的数据一致性分发问题？
+
+- 事务性发件箱模式(Transactional Outbox)
+- 变更数据捕获(Change Data Capture,CDC)
+- 双写?
+  - 需要后台校验补偿
+- 确保单一真实数据源(Single Source of Truth)
+
+![1608373971899](MicroserviceDistributedSystem.assets/1608373971899.png)
+
+
+
+#### 如何解决微服务的数据聚合Join问题？
+
+- BFF聚合层
+- 反正规化+流聚合
+  - 分布式物化视图(Materialized View)
+  - CQRS模式
+- CQRS最终一致性
+  - UI更新
+
+![1608376361264](MicroserviceDistributedSystem.assets/1608376361264.png)
+
+
+
+#### 如何解决微服务的分布式事务问题？
+
+- 2PC/XA/TCC
+- Saga模式
+  - 协同VS编排
+  - 需考虑隔离性
+- 主流开源产品
+  - 2PC/XA/TCC方案~ Seata
+  - 工作流/编排/Saga方案~ Cadence
+
+![1608430835177](MicroserviceDistributedSystem.assets/1608430835177.png)
+
+![1608433475037](MicroserviceDistributedSystem.assets/1608433475037.png)
+
+
+
+#### 如何实现遗留系统的解耦拆分？
+
+- 接口收口
+- 拆分迁移DB
+  - 双写＋开关,增量可回滚
+  - 数据补偿＋比对
+- 数据分发去Join
+
+![1608456423612](MicroserviceDistributedSystem.assets/1608456423612.png)
+
+
+
+## 如何设计一个高并发无状态的会话缓存服务 - 携程SessionServer案例 
+
+### SessionServer 项目背景和目标 
+
+#### 粘性会话（Sticky Session）101
+
+- Session会话机制，保存用户状态信息
+- 粘性会话 通过 LB，将用户会话绑定到 对应的应用服务器
+
+![1608461908579](MicroserviceDistributedSystem.assets/1608461908579.png)
+
+
+
+#### 粘性会话的问题
+
+- LB  负载相对不均衡
+- 应用和负载均衡设备耦合
+  - 一道架构的枷锁，任何调整都要考虑到它
+- 应用有状态
+  - 单点问题
+  - 发布问题
+  - 难以水平扩展
+    - Scale Out
+    - 跨数据中心 HA
+
+
+
+#### 负载不均衡问题
+
+- Session 请求不均匀，有状态请求
+
+- API  请求监控均衡，无状态请求
+
+![1608461996997](MicroserviceDistributedSystem.assets/1608461996997.png)
+
+
+
+#### 诡异的客户慢问题
+
+- 应用服务器有两台慢，刚好用户Session绑定到这两台服务器上
+- 由于 LB 的不均衡，导致服务器请求大，资源不足
+
+![1608462013959](MicroserviceDistributedSystem.assets/1608462013959.png)
+
+
+
+#### 面试题 ~ 四种常用会话技术
+
+- 粘性会话
+- 纯客户端会话（浏览器的Cookie大小限制 4K）
+- 服务器共享会话
+- 服务器端集中式会话（集中存储）
+
+![1608462079105](MicroserviceDistributedSystem.assets/1608462079105.png)
+
+
+
+#### 携程当时现状（2014年初）
+
+- 10000+服务器
+- 2000+App
+- 80,000,000PV
+- Ajax >>PV
+- session大小?1K 5K 50K 100K 1M ...
+- 20分钟同时在线:6,000,000
+- web应用主要基于ASP.Net开发
+- https://www.ctrip.com/
+
+
+
+#### SessionServer 架构和设计目标
+
+- 消除Sticky Session，支持应用 Scale out（横向扩展）
+- 高并发
+- 高性能（99.99%<10ms)
+- 高可用（HA)
+- 水平按需扩展（直接添加服务器就可以实现扩展）
+  - 透明扩容
+- 透明升级（升级更新SessionServer）
+- 支持跨数据中心（同城双活）
+- 接入简单（不用改代码)
+- 监控和运维友好（全部的监控）
+
+
+
+### 总体架构设计
+
+#### Thrift IDL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
