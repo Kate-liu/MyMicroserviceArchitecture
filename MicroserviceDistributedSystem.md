@@ -1186,55 +1186,403 @@
 
 ### 阿里分布式事务中间件Seata简析
 
+#### Seata 背景
+
+- https://github.com/seata/seata
+- 阿里巴巴分布式事务
+- 蚂蚁金服分布式事务
+
+![1608429730178](MicroserviceDistributedSystem.assets/1608429730178.png)
+
+
+
+#### Seata 概念
+
+- 一个全局分布式事务是由若干个本地分支事务组成
+
+![1608430697997](MicroserviceDistributedSystem.assets/1608430697997.png)
 
 
 
 
 
+#### Seata 角色
+
+- Transaction Coordinator（TC）
+- Transaction Manager（TM）
+- Resource Manager（RM）
+
+![1608430734600](MicroserviceDistributedSystem.assets/1608430734600.png)
 
 
 
 
 
+#### Seata 原理
+
+- XID，在TC中，确定是哪一个分支的事务
+- TC 需要保证高可用
+
+![1608430835177](MicroserviceDistributedSystem.assets/1608430835177.png)
+
+
+
+#### Seata 事务注解
+
+- Spring 的注解 @Transactional
+- Seata 的 @GlobalTransactional
+- Seata 的 全局锁机制，@GlobalLock，支持轻量级全局锁定隔离
+
+![1608430918750](MicroserviceDistributedSystem.assets/1608430918750.png)
+
+
+
+#### Seata-AT 原理：Phase 1
+
+- 两阶段的第一阶段，SQL事务已经提交
+
+![1608430989723](MicroserviceDistributedSystem.assets/1608430989723.png)
+
+
+
+#### Seata-AT 原理：Phase 2 Commit
+
+- 成功提交，找到 Undo log，删除
+- 可以异步执行
+
+![1608431010046](MicroserviceDistributedSystem.assets/1608431010046.png)
+
+
+
+#### Seata-AT 原理：Phase 2 Rollback
+
+- 失败回滚
+- 找到回滚 SQL，执行，并提交回滚
+- 可以异步执行
+
+![1608431036331](MicroserviceDistributedSystem.assets/1608431036331.png)
+
+
+
+#### Sata 通用分布式事务框架
+
+- 推荐使用 AT Mode
+
+![1608431171494](MicroserviceDistributedSystem.assets/1608431171494.png)
+
+
+
+#### Sata 高可用部署
+
+- 部署多台 TC
+- 提供注册中心，配置中心
+- 基于 Seata 解决微服务架构下数据一致性的实践：https://github.com/seata/seata-samples/tree/master/ha
+
+![1608431357062](MicroserviceDistributedSystem.assets/1608431357062.png)
+
+
+
+#### 支持框架、数据库和模式
+
+- RPC
+  - Dubbo
+  - Spring Cloud
+  - Motan
+  - SPFA-RPC
+  - 自定义RPC框架
+- 数据库
+  - MySQL，Oracle，postgreSQL，TiDB和RDS系列等
+  - AT 模式
+- 模式
+  - AT（推荐）
+  - TCC
+  - Saga ~ 异步长事务
 
 
 
 
 
+#### 参考资料
+
+- Seata PPT 文档
+- https://github.com/seata/awesome-seata
+
+
+
+### Uber 微服务编排引擎Cadence简析
+
+#### Uber Cadence 背景
+
+- https://github.com/uber/cadence
+- Cadence is a distributed, scalable, durable, and highly available orchestration engine to execute asynchronous long-running business logic in a scalable and resilient way.
+- https://cadenceworkflow.io/
+
+
+
+#### Uber Cadence 主要作者
+
+![1608433326234](MicroserviceDistributedSystem.assets/1608433326234.png)
+
+
+
+#### Uber 案例 ~ 小费Tips
+
+- 客户扣钱，司机加钱
+- 两次调用保证事务性
+
+![1608433381927](MicroserviceDistributedSystem.assets/1608433381927.png)
+
+
+
+#### Tips with Cadence
+
+- Cadence 是一个工作流引擎
+- Activity Worker，两个小的事务
+- Workflow Worker，驱动全局事务的执行
+- Workflow Starter，显示的启用
+
+![1608433475037](MicroserviceDistributedSystem.assets/1608433475037.png)
+
+
+
+#### Cadence 编程模式
+
+- Activity
+  - 活动，任务Task，处理器 Handler，微服务，Actor，分支事务执行者 
+- Workflow
+  - 工作流，编排流程，分布式事务流程
+  - 长短事务都支持
+- Starter
+  - 启动，发信号，查询
+  - 同步，异步都支持
+
+
+
+#### Cadence Activity 功能
+
+- 支持运行任何应用程序代码
+- 支持长期运行任务(heartbeating)
+- 支持异步执行
+- 根据设置的重试策略进行自动重试
+- 支持路由到指定的主机或者进程
+- 通过队列派遣任务执行
+- 支持对worker进行限流
+- 支持对queue进行限流
+
+
+
+#### Cadence Activity 样例
+
+![1608433784332](MicroserviceDistributedSystem.assets/1608433784332.png)
+
+
+
+#### Cadence Workflow 功能
+
+- 支持虚拟对象技术（Virtual Objects）
+- 支持事务
+- 对活动(Activities)进行编排
+- 支持接收外部事件并作出响应
+- 有状态(包含局部变量和栈)
+- 支持长期运行
+- 支持持久化的时钟
+
+
+
+#### Cadence Workflow 样例
+
+![1608433872244](MicroserviceDistributedSystem.assets/1608433872244.png)
+
+
+
+#### Activity 重试
+
+![1608433941405](MicroserviceDistributedSystem.assets/1608433941405.png)
+
+
+
+#### 事务补偿
+
+![1608433982083](MicroserviceDistributedSystem.assets/1608433982083.png)
+
+
+
+#### Cadence 客户端库
+
+- java & go
+- 无状态
+- 屏蔽开发复杂性
+- 支持以容错Actor方式开发分布式业务逻辑
+  - Distributed business logic programmed as fault tolerant actors 
+
+
+
+#### Cadence Web UI ~ 工作流查询
+
+- https://github.com/uber/cadence-web
+
+![1608434104858](MicroserviceDistributedSystem.assets/1608434104858.png)
+
+
+
+#### Cadence Web UI ~ 工作流执行细节
+
+- https://github.com/uber/cadence-web
+- 类似于 java 语言执行调用栈
+
+![1608434143104](MicroserviceDistributedSystem.assets/1608434143104.png)
+
+
+
+#### Cadence 实现 Saga模式
+
+- https://github.com/uber/cadence-java-samples/tree/master/src/main/java/com/uber/cadence/samples/bookingsaga
+- 添加补偿，saga.addCompensation()
+
+![1608434199474](MicroserviceDistributedSystem.assets/1608434199474.png)
+
+
+
+#### 参考资料
+
+- Cadence: The Only Workflow Platform You'll Ever Need. 
+  -  https://www.youtube.com/watch?v=llmsBGKOuWl&t=606sCadence 
+- Meetup: Introduction to Cadence
+  -  长事务案例UberEATS(送餐服务)
+  - https://www.youtube.com/watch?v=-Bulkhlc-RMuber 
+- Cadence: Fault Tolerant Actor Framework
+  - 长事务案例uDebitReward(司机积分服务)
+  - https://www.youtube.com/watch?v=qce_AqCkFys&t=197s
+- 更多同步/异步执行样例
+  - https://github.com/uber/cadence-java-samples
 
 
 
 
 
+### 如何理解 Uber Cadence 的架构设计？
+
+#### Cadence 微服务架构
+
+- Matching Service
+- History Service
+- Cassandra，MySQL
+
+![1608438003738](MicroserviceDistributedSystem.assets/1608438003738.png)
 
 
 
+#### Frontend Service
+
+- 相当于一个BFF或者Facade服务
+- 大部分透传调用History和Matching Service
+- 暴露对全局实体的CRUD操作
+- 暴露可视化(Visibility)API
 
 
 
+#### Frontend 
+
+- History Service 和 Matching Service 是有状态的
+- Ubuer Ringpop：https://github.com/uber/ringpop-go
+
+![1608438648718](MicroserviceDistributedSystem.assets/1608438648718.png)
 
 
 
+#### History Service
+
+- 两个队列 Transfer queue 和 Timer queue
+- Shard Controller
+
+![1608438712363](MicroserviceDistributedSystem.assets/1608438712363.png)
 
 
 
+#### 如何绑定分片（Shard）？
+
+![1608438775680](MicroserviceDistributedSystem.assets/1608438775680.png)
+
+![1608438791058](MicroserviceDistributedSystem.assets/1608438791058.png)
 
 
 
+#### Shard RangeID
+
+- Acqure Shard 操作，接着原子操作（CAS） writes，对 range_id +1操作
+- 当另一个 Host 加入的时候，继续 Acqure Shard 操作，range_id +1操作
+- 原来的 Host 就不能继续 Shard
+
+![1608438828818](MicroserviceDistributedSystem.assets/1608438828818.png)
+
+![1608438895863](MicroserviceDistributedSystem.assets/1608438895863.png)
+
+![1608438944309](MicroserviceDistributedSystem.assets/1608438944309.png)
+
+![1608438958024](MicroserviceDistributedSystem.assets/1608438958024.png)
+
+![1608438977266](MicroserviceDistributedSystem.assets/1608438977266.png)
 
 
 
+#### Cadence 为什么要支持事务性分发？
+
+![1608439048195](MicroserviceDistributedSystem.assets/1608439048195.png)
 
 
 
+#### Transfer queue
+
+- 实现事务的流转
+
+![1608439072903](MicroserviceDistributedSystem.assets/1608439072903.png)
+
+![1608439099974](MicroserviceDistributedSystem.assets/1608439099974.png)
+
+![1608439118247](MicroserviceDistributedSystem.assets/1608439118247.png)
 
 
 
+#### 关键技术 ~ 事务性发件箱
+
+- 事务性发件箱是事务一致性分发的解决方案
+
+![1608439227845](MicroserviceDistributedSystem.assets/1608439227845.png)
 
 
 
+#### Cadence 中的分布式问题和技术
+
+- 任务处理器
+  - Handler 
+  - Actor
+  - 微服务
+- 发现和路由(Discovery & Routing)
+- 负载均衡(Load Balancing)
+- 分布式存储
+- 分片Shardinng
+- 队列机制Queuing
+- 事件溯源(Event Sourcing)
+- 组成员协议+一致性Hash(Ringpop)
+- 持久化Timer(延迟任务)
+- 限流和流控
 
 
+
+#### 参考资料
+
+- Cadence Meetup: Cadence Architecture
+- https://www.youtube.com/watch?v=5M5eiNBUf4Q
+- Cadence源码(可以从早期release看起)
+- https://github.com/uber/cadence
+- 阅读源码：cadence-v0.1.0-beta
+- https://github.com/uber/cadence/releases/tag/v0.1.0-beta
+
+
+
+### 如何实现遗留系统的解耦拆分？
+
+#### 什么时候该解耦拆分？
 
 
 
