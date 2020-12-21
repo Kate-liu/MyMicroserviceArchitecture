@@ -2091,13 +2091,15 @@
 
 
 
-#### 面试题：如何设计一个LRU 缓存
+#### 面试题：如何设计一个LRU 缓存 V1
 
 ##### LRU Cache 原理
 
 - 头结点就是下一个被剔除的对象
+- 每一次查询的对象，都被移动到尾结点
+- 当对象的大小超过总体的容量的时候，清理最近最少使用的对象，也即头结点
 
-缺一张图
+![1608511054949](MicroserviceDistributedSystem.assets/1608511054949.png)
 
 
 
@@ -2212,7 +2214,7 @@ public class LruCacheV1<K, V> {
 
 
 
-#### 面试题：如何设计一个线程安全的LRU 缓存
+#### 面试题：如何设计一个线程安全的LRU 缓存 V2
 
 ##### LRU Cache 实现 V2
 
@@ -2342,7 +2344,7 @@ public class LruCacheV2<K, V> {
 
 
 
-#### 面试题：如何设计一个线程安全和高并发的LRU 缓存
+#### 面试题：如何设计一个线程安全和高并发的LRU 缓存 V3
 
 ##### LRU Cache 实现 V3
 
@@ -2412,7 +2414,7 @@ public class LruCacheV3<K, V> {
 
 
 
-#### SessionServer LRU Cache 
+#### SessionServer LRU Cache  ~ okCache
 
 - 基于Guava Cache改造简化
 - 核心思想类似LRUCache实现V3
@@ -2434,9 +2436,9 @@ public class LruCacheV3<K, V> {
 - 高并发RingBuffer
 - https://github.com/ben-manes/caffeine
 
+![1608511391956](MicroserviceDistributedSystem.assets/1608511391956.png)
 
 
-缺一张图
 
 
 
@@ -2445,22 +2447,41 @@ public class LruCacheV3<K, V> {
 #### 会话缓存溢出问题
 
 - 二级缓存只追求容量
+- 当内存缓存达到内存的最大容量的时候，就需要进行会话缓存的移出，到二级缓存
+
+![1608474014121](MicroserviceDistributedSystem.assets/1608474014121.png)
 
 
 
 #### 可持久化的ConcurrentHashmap ~ BigCache
 
+- Key常驻内存（Key不大），Value可持久化（Value大）
+  - 分段读写锁
+- 读写存储块，定制GC
+- 支持三种模式
+  - 纯磁盘文件模式
+  - 内存映射+磁盘文件
+  - 堆外内存+磁盘文件
+- 埋点统计
 - 更新操作，删除多了，会有存储空洞，垃圾碎片，Cleaning Threads 实现清理
 - https://github.com/spring2go/okcache/tree/master/src/main/java/com/spring2go/bigcache
 
-
+![1608511771891](MicroserviceDistributedSystem.assets/1608511771891.png)
 
 
 
 #### Yahoo HaloDB
 
-- 
+- Key常驻内存，Value持久化
+  - 小Key (8字节)，大Value（平均10KB）
+  - 总体存储量>内存
+- 高并发读写
+- 高性能低延迟
+- Append Only（只添加不直接删除，标记删除），墓碑删除机制
+- 后台线程定期Compact
 - https://github.com/yahoo/HaloDB
+
+![1608511942508](MicroserviceDistributedSystem.assets/1608511942508.png)
 
 
 
@@ -2468,27 +2489,56 @@ public class LruCacheV3<K, V> {
 
 #### 设计评估
 
+| 1    | 消除 Stick Session，支持应用 Scale Out | 达成                                                         |
+| ---- | -------------------------------------- | ------------------------------------------------------------ |
+| 2    | 高并发                                 | 分段锁，SessionServer 集群分摊负载                           |
+| 3    | 高性能                                 | 99百分位<10ms                                                |
+| 4    | 高可用                                 | SessionServer挂一台或几台都不影响，分组 Group 隔离，扩数据中心 IDC |
+| 5    | 水平按需扩展/透明扩展                  | 可以按需添加 sessionServer                                   |
+| 6    | 透明升级                               | 可以按需对SessionServer进行上下线，对用户无影响              |
+| 7    | 支持跨数据中心                         | 支持                                                         |
+| 8    | 接入简单                               | 只需引用 SessionClient DLL，可以通过发布工具自动化           |
+| 9    | 监控运维友好                           | 细粒度埋点和监控                                             |
 
+![1608473961431](MicroserviceDistributedSystem.assets/1608473961431.png)
 
 
 
 #### Hystrix 限流容错
 
+![1608512298850](MicroserviceDistributedSystem.assets/1608512298850.png)
+
 
 
 #### 生产性能监控
+
+- 爬虫引发多次出发限流熔断监控
+
+![1608512316588](MicroserviceDistributedSystem.assets/1608512316588.png)
 
 
 
 #### 最佳实践
 
+- 缓存是高并发/高性能的基础
+  - 分段锁
+  - LRU+二级缓存机制
+- 高性能vs复杂度/可理解性的平衡
+- “无状态”分布式缓存
+  - 客户端cookie保存SessionServer lP
+  - 写后( write Behind）到后端存储（状态备份)
+- 分组隔离
+- 增量应用迁移
+- 透明扩容/升级
+- 组件积木式开发
+- 监控埋点+容错限流
+- 单元/并发和性能测试
 
 
 
+## 系统设计综合案例 - SaaS服务healthchecks.io的设计 
 
-
-
-
+### SaaS 项目 healthchecks.io的背景和架构
 
 
 
