@@ -1191,6 +1191,7 @@
 - https://github.com/seata/seata
 - 阿里巴巴分布式事务
 - 蚂蚁金服分布式事务
+- 前身是 fescar
 
 ![1608429730178](MicroserviceDistributedSystem.assets/1608429730178.png)
 
@@ -2540,175 +2541,495 @@ public class LruCacheV3<K, V> {
 
 ### SaaS 项目 healthchecks.io的背景和架构
 
+#### healthchecks.io
 
+- 定时任务( Cron Job)监控
+- 开源Saas 项目
+  -  Python & Django
+- 一个人的SaaS产品
+- https://healthchecks.io/
+- https://github.com/healthchecks
 
 
 
+#### 定时任务监控原理
 
+1. 用户通过healthchecks.io(HC)设置监控目标的定时任务Cron表达式 
+2. HC监控来自被监控服务的ping请求
+3. 如果ping 准时到达，那么HC保持静默
+4. 如果ping未准时到达，那么HC就发出告警
 
+![1609213008620](MicroserviceDistributedSystem.assets/1609213008620.png)
 
+![1609213020060](MicroserviceDistributedSystem.assets/1609213020060.png)
 
 
 
+#### 应用场景
 
+定时任务(Cron Jobs)
 
+1. 文件系统备份
+2. 数据库备份
+3. 定期业务数据导入
+4. 定期数据清理
+5. 定期病毒扫描
+6. SSL过期更新
 
+进程、服务、服务器
 
+1. 定期检查应用进程存活
+2. 队列堆积监控
+3. 定期检查机器/VM/容器存活
+4. 系统资源监控（磁盘/内存...)
 
 
 
+#### UI - 监控面板
 
+![1609213163566](MicroserviceDistributedSystem.assets/1609213163566.png)
 
 
 
+#### UI -  Check 配置
 
+![1609213202267](MicroserviceDistributedSystem.assets/1609213202267.png)
 
 
 
+#### 告警集成
 
+![1609213231728](MicroserviceDistributedSystem.assets/1609213231728.png)
 
 
 
+#### 一个人的SaaS产品
 
+- https://blog.healthchecks.io/2019/08/healthchecks-pycon-lithuania-19/
 
+![1609213307796](MicroserviceDistributedSystem.assets/1609213307796.png)
 
 
 
+#### 业务状况
 
+![1609213334859](MicroserviceDistributedSystem.assets/1609213334859.png)
 
 
 
+#### 架构 2016
 
+![1609213358841](MicroserviceDistributedSystem.assets/1609213358841.png)
 
 
 
+#### 架构 2017
 
+![1609213378043](MicroserviceDistributedSystem.assets/1609213378043.png)
 
 
 
+#### 如何设计 myhc.io?
 
+架构设计需求
 
+1. 高性能/高可用/可扩展
+2. 核心领域模型
+3. 延迟任务
+4. 锁
+5. 限流
+6. 防攻击/防爬虫
 
 
 
+#### 核心领域模型（不包括支付）
 
+- https://github.com/healthchecks/healthchecks/blob/master/hc/api/models.py
 
+![1609213500828](MicroserviceDistributedSystem.assets/1609213500828.png)
 
 
 
+#### myhc.io 的架构
 
+![1609213549131](MicroserviceDistributedSystem.assets/1609213549131.png)
 
 
 
+#### 参考
 
+- Healthchecks.io 博客
+  - https://blog.healthchecks.io/
+- 开源异常日志健康 SaaS 平台 Sentry
+  - https://github.com/getsentry
 
 
 
+### 如何设计一个轻量级的延迟任务队列
 
+#### Check Model
 
+- code
+- schedule
+- last_ping
+- alert_after
+- status
 
+![1609213689398](MicroserviceDistributedSystem.assets/1609213689398.png)
 
 
 
+#### 轻量持久化的延迟任务
 
+- https://github.com/healthchecks/healthchecks/blob/master/hc/api/management/commands/sendalerts.py
+- 乐观锁
 
+![1609213805616](MicroserviceDistributedSystem.assets/1609213805616.png)
 
 
 
+#### Db-scheduler 项目
 
+- 参考项目：集群持久化友好的调度器
+- 本质也是一种延迟任务队列
+- 支持周期和一次性延迟任务
+- https://github.com/kagkarlsson/db-scheduler
 
+![1609213866975](MicroserviceDistributedSystem.assets/1609213866975.png)
 
 
 
+#### Killbill Notification Queue 项目
 
+- 本质是一种延迟任务队列
+- 支持一次性延迟任务
 
+![1609214016877](MicroserviceDistributedSystem.assets/1609214016877.png)
 
 
 
+#### Cron 表达式处理 项目
 
+- 参考项目：java 的定时表达式工具
+- https://github.com/jmrozanec/cron-utils
 
+![1609214127526](MicroserviceDistributedSystem.assets/1609214127526.png)
 
 
 
 
 
+#### 其他任务调度开源项目
 
+- Quartz（java）
+  - https://github.com/quartz-scheduler/quartz
+- xxl-job（java）
+  - https://github.com/xuxueli/xxl-job
+- Celery（python）
+  - https://github.com/celery/celery
+- Hangfire（c#）
+  - https://github.com/HangfireIO/Hangfire
 
 
 
+### 如何设计一把轻量级的锁？
 
+#### 锁的应用场景和类型
 
+场景
 
+- 周期性处理任务/唯─执行者
+  - PMQ定期清理七天前的老消息
+  - Healthchecks.io
+    - 定期Check/Alert
+    - 定期清理ping数据
+    - 定期扣费( billing)
+- Master/Standby高可用(一个决策大脑)
+  - K8s Scheduler/Mesos Master
+  - PMQ的重平衡协调者
+- 多个线程/进程/微服务更新共享数据场景
+  - 微服务场景->分布式锁
 
+类型
 
+- 乐观锁
+- 悲观锁
 
 
 
 
 
+#### 乐观锁
 
+- 基于一个版本号
+- 默认写的成功性大远远大于失败的概率
 
+![1609214472541](MicroserviceDistributedSystem.assets/1609214472541.png)
 
 
 
+#### 悲观锁
 
+- 基于一个全局锁的服务，掌控资源
 
+![1609214488338](MicroserviceDistributedSystem.assets/1609214488338.png)
 
 
 
+#### 栅栏令牌（fencing token）锁
 
+- 使用令牌的方式，自增1
+- 设置一个锁过期时间，防止长期占用锁
 
+![1609214596682](MicroserviceDistributedSystem.assets/1609214596682.png)
 
 
 
+#### ShedLock 项目
 
+- 适用于周期任务
+  - 唯一执行者场景
+- 支持多种Lock Providers
+  - Jdbc
+  - Mongo
+  - zookeeper
+  - Redis
+  - Hazelcast
+- 支持锁超时( lockAtMostFor )
+- 支持至少执行时间( lockAtLeastFor )
+- https://github.com/lukas-krecan/ShedLock
 
 
 
+### 如何设置一个分布式限流系统？
 
+#### Github API Rate Limiting
 
+![1609214886131](MicroserviceDistributedSystem.assets/1609214886131.png)
 
 
 
+#### LinkedIn API Rate Limiting
 
+![1609214923105](MicroserviceDistributedSystem.assets/1609214923105.png)
 
 
 
+#### Bitly API Rate Limiting
 
+![1609214950602](MicroserviceDistributedSystem.assets/1609214950602.png)
 
 
 
+#### 如何设计一个分布式限流系统？
 
+场景
 
+1. 防止恶意访问(DDoS)
+2. 用户程序问题
+3. 支持双十一
+4. 内部服务出问题
+5. 服务本身有处理容量限制
 
+架构设计需求
 
+1. 高并发/高性能/高可用/可扩展
+2. 最小化对用户请求的延迟
+3. 限流实时和准确性
+   1. 强一致vs最终一致
+   2. 精确vs大致准确
+4. 最小化内存占用
 
 
 
+#### 令牌桶 or 漏桶算法
 
+- 分发令牌，会导致请求不均匀，不平滑
 
+![1609215135870](MicroserviceDistributedSystem.assets/1609215135870.png)
 
 
 
+#### 令牌桶（每分钟填充1个令牌）
 
+![1609215228691](MicroserviceDistributedSystem.assets/1609215228691.png)
 
 
 
+#### 分布式的问题
 
+- 同时操作数据的时候，get 和 set 之间的问题
+- 如果不能保证操作原子性，那么限流就不准确
 
+![1609215281595](MicroserviceDistributedSystem.assets/1609215281595.png)
 
 
 
+#### 固定窗口计数器
 
+- 固定一个时间段，多少请求，来限流
 
+![1609215314077](MicroserviceDistributedSystem.assets/1609215314077.png)
 
 
 
+#### 固定窗口计数器（每分钟限流2个请求）
 
+![1609215373309](MicroserviceDistributedSystem.assets/1609215373309.png)
 
 
 
+#### 固定窗口的问题
 
+- 由于时间的窗口与窗口之间，会有一个边界
+- 做不到流畅与平滑
+
+![1609215458799](MicroserviceDistributedSystem.assets/1609215458799.png)
+
+
+
+#### 滑动窗口计数器
+
+- 保证限流请求的流畅性
+
+![1609215477594](MicroserviceDistributedSystem.assets/1609215477594.png)
+
+
+
+#### 滑动窗口计数器（每小时限流2个请求）
+
+![1609215573075](MicroserviceDistributedSystem.assets/1609215573075.png)
+
+
+
+#### Hystrix 滑动窗口计数器
+
+- https://github.com/Netflix/Hystrix
+- 每十秒为一个滑动窗口，作为一个 buckets
+
+![1609215664529](MicroserviceDistributedSystem.assets/1609215664529.png)
+
+
+
+#### 集中状态限流
+
+- 使用一个限流服务，提供整体的限流
+
+![1609215726168](MicroserviceDistributedSystem.assets/1609215726168.png)
+
+
+
+#### 无状态限流
+
+![1609215745479](MicroserviceDistributedSystem.assets/1609215745479.png)
+
+
+
+
+
+#### 限流最佳实践
+
+- 不要让限流器bug影响程序的正常工作
+- 合理返回限流错误
+  - HTTP 429 (Too Many Requests )
+  - HTTP 503 ( Service Unavailable)
+  - HTTP 200?（不让外界知道服务的状态，不管什么，都返回200）
+- 可以按需关闭限流器
+  - 功能开关
+- 安全上线策略
+  - 先打日志监控
+
+
+
+
+
+#### 开源项目参考
+
+- Bucket4j
+  - 令牌桶算法，Github 800+ stars
+  - https://github.com/vladimir-bukhtoyarov/bucket4j
+- Ratelimiter4j
+  - 固定窗口算法，Github 600+ stars
+  - https://github.com/wangzheng0822/ratelimiter4j
+- Ratelimitj
+  - 滑动窗口算法，Github 300+ stars
+  - https://github.com/mokies/ratelimitj
+- Spring-cloud-zuul-ratelimit
+  - zuul网关限流，Github 900+ stars
+  - https://github.com/marcosbarbero/spring-cloud-zuul-ratelimit
+- Sentinel
+  - 中大规模企业级限流，Github 13k stars
+  - https://github.com/alibaba/Sentinel
+
+![1609215872138](MicroserviceDistributedSystem.assets/1609215872138.png)
+
+
+
+
+
+### 如何设计一个分布式 TopK 系统实现防爬虫？
+
+#### 如何设计一个分布式 TopK 系统？
+
+场景
+
+1. 防爬虫
+2. 防DDoS攻击
+3. 当前最热100微博/视频/新闻/商品/股票
+
+功能需求
+- topk (k, startTime, endTime)
+- 分钟
+
+架构设计需求
+
+- 高性能
+- 100ms内返回top 100列表
+- 高可用
+  - 不能有单点失败。
+- 可扩展
+  - 携程/B站规模
+- 准确性
+  - 尽可能准确
+
+
+
+#### 单机方案
+
+- 一般 十万级别的数据，可以使用单机实现
+- 对一分钟的数据，进行排序，需要使用到算法
+- 推荐，使用小堆排序
+
+![1609216236637](MicroserviceDistributedSystem.assets/1609216236637.png)
+
+
+
+#### TopK 算法实现
+
+- min heap （最小堆）
+
+![1609216375122](MicroserviceDistributedSystem.assets/1609216375122.png)
+
+
+
+#### 多机分区方案
+
+- 在分布式的场景下，需要进行多态主机进行分开聚合，然后归并排序
+
+![1609216453301](MicroserviceDistributedSystem.assets/1609216453301.png)
+
+
+
+#### 防爬虫总体架构设计（异步）
+
+- 内部使用 Kafka 做为消息队列，使用 customer 进行日志的提取，将结果存入数据库
+- 基于 TopK 算法，实现最近一段时间内 IP 访问最大值的检测
+
+![1609216489931](MicroserviceDistributedSystem.assets/1609216489931.png)
+
+
+
+## 如何实现精细化服务治理 - 服务网格技术ServiceMesh解析 
 
 
 
