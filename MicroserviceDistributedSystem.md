@@ -3031,195 +3031,701 @@ public class LruCacheV3<K, V> {
 
 ## 如何实现精细化服务治理 - 服务网格技术ServiceMesh解析 
 
+### 为什么说 ServiceMesh 是微服务的未来？
 
+#### 微服务治理 - Must Have
 
+- 服务发现
+- 服务监控
+- 弹性和容错
 
+![1609292033126](MicroserviceDistributedSystem.assets/1609292033126.png)
 
 
 
+#### 微服务治理 - Need To Hava
 
+![1609292065621](MicroserviceDistributedSystem.assets/1609292065621.png)
 
 
 
+#### 微服务治理演进史 - Dubbo(2012年前)
 
+- 框架继承
+- https://dubbo.apache.org/
+- Dubbo 是借鉴 finagle 实现的
 
+![1609292182682](MicroserviceDistributedSystem.assets/1609292182682.png)
 
+![1609292237137](MicroserviceDistributedSystem.assets/1609292237137.png)
 
 
 
+#### 微服务治理演进史 - Airbnb SmarkStack(2013)
 
+- 主机独立进程
+- 目前已经不维护项目了
 
+![1609292322233](MicroserviceDistributedSystem.assets/1609292322233.png)
 
+![1609292343947](MicroserviceDistributedSystem.assets/1609292343947.png)
 
 
 
+#### 微服务治理演进史 - Netflix OSS/ Spring Cloud(2013年后)
 
+- 框架组件
+- Spring cloud 是在 Netflix 开源的基础上，分装出来的
 
+![1609292427029](MicroserviceDistributedSystem.assets/1609292427029.png)
 
+![1609292439420](MicroserviceDistributedSystem.assets/1609292439420.png)
 
 
 
+#### 微服务治理演进史 - Envoy/ Istio(2016后)
 
+- 编程（sidecar）or 服务网格（serviceMesh）
+- https://istio.io/latest/docs/concepts/what-is-istio/
 
+![1609292536093](MicroserviceDistributedSystem.assets/1609292536093.png)
 
+![1609292567974](MicroserviceDistributedSystem.assets/1609292567974.png)
 
 
 
+#### 比较
 
+| 代   | 代表开源产品      | 年代     | 集成/部 署模式    | 优势                                      | 不足                                     | 支持组织                   |
+| ---- | ----------------- | -------- | ----------------- | ----------------------------------------- | ---------------------------------------- | -------------------------- |
+| 1    | Dubbo/Finagle     | 2012年前 | 框架继承          | 性能，代码层控制粒度                      | 多语言成本高，业务代码耦合，升级迁移麻烦 | Apache + 阿里              |
+| 1.5  | Airbnb SmartStack | 2013     | 边车/主机独立进程 | 支持多语言，非侵入式                      | 部署运维成本高，非标准                   | Airbnb                     |
+| 2    | Spring Cloud      | 2013年后 | 框架组件          | 性能，代码层控制粒度，组件化              | 多语言成本高，业务代码耦合，升级迁移麻烦 | Pivotal/Netflix            |
+| 3    | Istio/Envoy       | 2016年后 | 边车/服务网格     | 支持多语言，非侵入，标准化，和k8s无缝集成 | 无法控制到业务代码层                     | 谷歌/IBM/Lyft/Redhat/Cisco |
 
+![1609292967883](MicroserviceDistributedSystem.assets/1609292967883.png)
 
 
 
+#### k8s + serviceMesh 是微服务的未来
 
+- 数据中心虚拟化+跨横切面
+- 关注点下沉，是行业总趋势
 
+![1609293141029](MicroserviceDistributedSystem.assets/1609293141029.png)
 
 
 
+### 解析 Envoy Proxy
 
+#### Envoy 云原生代理
 
+1. Out of process architecture
+2. Modern C++11 code base
+3. L3/L4 filter architecture
+4. HTTP L4 filter architecture
+5.  First class HTTP/2 support
+6. HTTPL7 routing
+7. gRPC support
+8. Service discovery and dynamicconfiguration
+9. Active/passive Health checking
+10. Advanced load balancing
+11. Service/middle/edge proxy
+12. Best in class observability
+13. Graceful restart
+14. https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy
+
+![1609293344511](MicroserviceDistributedSystem.assets/1609293344511.png)
+
+
+
+#### 谁在用Envoy
+
+![1609293369123](MicroserviceDistributedSystem.assets/1609293369123.png)
+
+
+
+#### 核心概念
+
+- Downstream
+- Upstream
+
+![1609293423739](MicroserviceDistributedSystem.assets/1609293423739.png)
+
+
+
+#### 场景
+
+1. 演示一个HTTP/2请求（TLS over TCP)
+2. 唯一network filter ~HTTP connection manager
+3. HTTP filter chain~一个CustomFilter + router filter
+4. 文件系统访问日志
+5. Statsd sink
+6. 单个集群cluster
+7. 静态配置
+8. https://www.envoyproxy.io/docs/envoy/latest/intro/life_of_a_request
+
+
+
+#### 静态配置
+
+```yaml
+static_resources:
+  listeners:
+  # There is a single listener bound to port 443.
+  - name: listener_https
+    address:
+      socket_address:
+        protocol: TCP
+        address: 0.0.0.0
+        port_value: 443
+    # A single listener filter exists for TLS inspector.
+    listener_filters:
+    - name: "envoy.filters.listener.tls_inspector"
+      typed_config: {}
+    # On the listener, there is a single filter chain that matches SNI for acme.com.
+    filter_chains:
+    - filter_chain_match:
+        # This will match the SNI extracted by the TLS Inspector filter.
+        server_names: ["acme.com"]
+      # Downstream TLS configuration.
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+          common_tls_context:
+            tls_certificates:
+            - certificate_chain: { filename: "certs/servercert.pem" }
+              private_key: { filename: "certs/serverkey.pem" }
+      filters:
+      # The HTTP connection manager is the only network filter.
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          use_remote_address: true
+          http2_protocol_options:
+            max_concurrent_streams: 100
+          # File system based access logging.
+          access_log:
+            - name: envoy.access_loggers.file
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+                path: "/var/log/envoy/access.log"
+          # The route table, mapping /foo to some_service.
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: local_service
+              domains: ["acme.com"]
+              routes:
+              - match:
+                  path: "/foo"
+                route:
+                  cluster: some_service
+          # CustomFilter and the HTTP router filter are the HTTP filter chain.
+          http_filters:
+            # - name: some.customer.filter
+            - name: envoy.filters.http.router
+  clusters:
+  - name: some_service
+    connect_timeout: 5s
+    # Upstream TLS configuration.
+    transport_socket:
+      name: envoy.transport_sockets.tls
+      typed_config:
+        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+    load_assignment:
+      cluster_name: some_service
+      # Static endpoint assignment.
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: 10.1.2.10
+                port_value: 10002
+        - endpoint:
+            address:
+              socket_address:
+                address: 10.1.2.11
+                port_value: 10002
+    typed_extension_protocol_options:
+      envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+        "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+        explicit_http_config:
+          http2_protocol_options:
+            max_concurrent_streams: 100
+  - name: some_statsd_sink
+    connect_timeout: 5s
+    # The rest of the configuration for statsd sink cluster.
+# statsd sink.
+stats_sinks:
+  - name: envoy.stat_sinks.statsd
+    typed_config:
+      "@type": type.googleapis.com/envoy.config.metrics.v3.StatsdSink
+      tcp_cluster_name: some_statsd_sink
+```
 
 
 
+#### 请求流程
 
+#####  监听器接受TCP 连接
 
+![1609293693401](MicroserviceDistributedSystem.assets/1609293693401.png)
 
 
 
+##### 监听器和网络过滤链匹配
 
+![1609293792233](MicroserviceDistributedSystem.assets/1609293792233.png)
 
 
 
+##### TLS 传输层解密
 
+![1609293833647](MicroserviceDistributedSystem.assets/1609293833647.png)
 
 
 
+##### 网络过滤处理 + HTTP 2解码
 
+![1609294055591](MicroserviceDistributedSystem.assets/1609294055591.png)
 
 
 
+##### HTTP 过滤链处理
 
+![1609294111620](MicroserviceDistributedSystem.assets/1609294111620.png)
 
 
 
 
 
+##### 负载均衡
 
+![1609294145736](MicroserviceDistributedSystem.assets/1609294145736.png)
 
 
 
+##### HTTP 2 编码 + TLS传输层套接字加密
 
+![1609294184278](MicroserviceDistributedSystem.assets/1609294184278.png)
 
 
 
+##### 响应和事后处理
 
+- 响应处理
+- 提前终止
+- 事后处理
+  - 统计
+  - 访问日志
+  - 调用链 trace
 
+![1609294255272](MicroserviceDistributedSystem.assets/1609294255272.png)
 
 
 
 
 
+#### Envoy 的线程模型
 
+- 内部支持请求事件循环
 
+![1609294341296](MicroserviceDistributedSystem.assets/1609294341296.png)
 
 
 
 
 
+#### 部署方式
 
+##### ServiceMesh
 
+![1609294394316](MicroserviceDistributedSystem.assets/1609294394316.png)
 
 
 
+##### 集中式 Proxy/LB
 
+![1609294459482](MicroserviceDistributedSystem.assets/1609294459482.png)
 
 
 
+##### Ingress/Egress Proxy
 
+![1609294490831](MicroserviceDistributedSystem.assets/1609294490831.png)
 
 
 
+##### 混合式 Hybrid
 
+![1609294526895](MicroserviceDistributedSystem.assets/1609294526895.png)
 
 
 
+#### Envoy的性能 
 
+##### 延迟百分位
 
+- https://www.loggly.com/blog/benchmarking-5-popular-load-balancers-nginx-haproxy-envoy-traefik-and-alb/
 
+![1609294642315](MicroserviceDistributedSystem.assets/1609294642315.png)
 
 
 
+##### 并发吞吐性能
 
+- https://www.loggly.com/blog/benchmarking-5-popular-load-balancers-nginx-haproxy-envoy-traefik-and-alb/
 
+![1609294688399](MicroserviceDistributedSystem.assets/1609294688399.png)
 
 
 
 
 
+### Envoy 在 Lyft 的实践
 
+#### Lyft - 7 年前
 
+![1609294752948](MicroserviceDistributedSystem.assets/1609294752948.png)
 
 
 
+#### Lyft - 5 年前
 
+![1609294800493](MicroserviceDistributedSystem.assets/1609294800493.png)
 
 
 
+#### Lyft 微服务架构的问题（5年前）
 
+- **缺乏一致的服务治理**
+- 多种语言栈和框架
+- 多种协议（HTTP/1，HTTP/2，gRPC，DB,Caching, etc.)
+- 黑盒子负载均衡器(AwSELB)
+- 缺乏一致的监控( stats, tracing, logging )
+- 缺乏一致的容错限流（retry,circuit breaking,rate limiting, timeouts )
+- 服务间几乎没有认证和授权机制
+- 需要为不同的语言栈开发客户端
+- 对延迟和失败的监控不完善
+- 开发人员对微服务架构缺乏信心
 
 
 
+#### 引入 Envoy + ServiceMesh
 
+- 每一个服务使用一个 边车
 
+![1609294946137](MicroserviceDistributedSystem.assets/1609294946137.png)
 
 
 
+#### Envoy 核心价值
 
+- 所有流量集中经过Envoy
+  - 统一的监控metrics/logging/tracing
+  - 统一传播request ID/tracing context
+  - 集中的流量治理
+  - 集中的限流熔断
+  - 集中的安全治理
+- 统一的服务治理是Envoy+ServiceMesh 提供的最主要价值
 
 
 
+#### Lyft 2018
 
+![1609295095390](MicroserviceDistributedSystem.assets/1609295095390.png)
 
 
 
+#### 单个服务监控面板
 
+![1609295134152](MicroserviceDistributedSystem.assets/1609295134152.png)
 
 
 
+#### 分布式调用链
 
+![1609295158799](MicroserviceDistributedSystem.assets/1609295158799.png)
 
 
 
+#### 日志
 
+![1609295176088](MicroserviceDistributedSystem.assets/1609295176088.png)
 
 
 
+#### 服务到服务的监控
 
+![1609295203264](MicroserviceDistributedSystem.assets/1609295203264.png)
 
 
 
+#### 对 Envoy Proxy 的监控
 
+![1609295228465](MicroserviceDistributedSystem.assets/1609295228465.png)
 
 
 
+#### 全局健康监控
 
+![1609295250447](MicroserviceDistributedSystem.assets/1609295250447.png)
 
 
 
+#### 瘦客户端 @Lyft
 
+![1609295313475](MicroserviceDistributedSystem.assets/1609295313475.png)
 
 
 
+#### 控制平面和配置管理
 
+- 引入 Envoy manager service
 
+![1609295342336](MicroserviceDistributedSystem.assets/1609295342336.png)
 
 
 
+#### 总结和参考
 
+- Envoy + ServiceMesh
+  - 标准化通讯层和服务治理
+  - 标准化监控
+  - 支持多语言栈/框架和协议，简化客户端
+  - 控制平面可定制自研
+  - 中大规模企业考虑
+- Lyft's Envoy: Embracing a Service Mesh
+  - https://www.youtube.com/watch?v=55yi4MMVBi4
+  - https://www.slideshare.net/InfoQ/lyfts-envoy-embracing-a-service-mesh. 
+- lntroducing envoy-based service mesh at Booking.com
+  - https://www.youtube.com/watch?v=Pus2ytdEfrQ
+  - https://www2.slideshare.net/IvanKruglov/ivan-kruglov-introducing-envoybased-service-mesh-at-bookingcom-version-7?qid=fd839056-940a-4f0f-b2bb-ab9472d480b1&v=&b=&from_search=2
 
 
 
+### 解析 Istio
 
+#### Istio v1.6 架构
 
+- 流量治理
+- 安全治理
+- 监控测量
+- https://istio.io/latest/docs/ops/deployment/architecture/
+- 数据平面 + 控制平面
+
+![1609295954961](MicroserviceDistributedSystem.assets/1609295954961.png)
+
+
+
+
+
+#### 流量治理
+
+- 实现金丝雀发布，A/B测试
+
+![1609296036047](MicroserviceDistributedSystem.assets/1609296036047.png)
+
+
+
+#### 新概念 - VirtualService  & DestinationRule
+
+- 引入虚拟服务，client 不需要关注具体的服务，保证接口的一致性
+
+![1609296076878](MicroserviceDistributedSystem.assets/1609296076878.png)
+
+
+
+#### 安全架构
+
+- https://istio.io/latest/docs/concepts/security/
+
+![1609296181276](MicroserviceDistributedSystem.assets/1609296181276.png)
+
+
+
+#### 可视化监控 - Kiali
+
+- https://istio.io/latest/docs/tasks/observability/kiali/
+
+![1609296299839](MicroserviceDistributedSystem.assets/1609296299839.png)
+
+
+
+#### 理解 k8s Service
+
+- 一个Node 中，可以包含多个不同服务的 pod
+- 内部服务请求，会经过公共的 集群 服务IP Table 进行路由
+
+![1609296327776](MicroserviceDistributedSystem.assets/1609296327776.png)
+
+- 使用 Kube-proxy 之后，将服务路由 IP 的功能，下沉到每一个 Node 中
+
+![1609296474357](MicroserviceDistributedSystem.assets/1609296474357.png)
+
+
+
+#### 理解 k8s + Istio
+
+- 集成 Istio 之后，会有一个公共的控制面板 Istio Control Plane
+- 每一个路由的proxy ,下沉到每一个 pod 中，使用 Istio proxy 进行服务的路由
+
+![1609296611466](MicroserviceDistributedSystem.assets/1609296611466.png)
+
+- 此时的  Istio proxy 功能，就是缓存整个 k8s 服务的路由
+
+![1609296689784](MicroserviceDistributedSystem.assets/1609296689784.png)
+
+- 当pod的服务有请求，直接在本地被截获，转发到对应的目标服务上
+
+![1609296760088](MicroserviceDistributedSystem.assets/1609296760088.png)
+
+- 当外部请求需要访问服务的时候，经过 LB后，会有一个 Istio Gateway，
+- 作为请求的网关，内部也会有一个 Istio proxy ，可以直接命中请求的对象
+
+![1609296877529](MicroserviceDistributedSystem.assets/1609296877529.png)
+
+
+
+#### 参考
+
+- k8s 基本概念和应用
+- https://www.bilibili.com/video/BV1Ja4y1x748
+
+
+
+### K8s Ingress、lstio Gateway和 APl Gateway该如何选择?
+
+#### K8s ClusterIP Service - Userspace Proxy Mode
+
+![1609297218067](MicroserviceDistributedSystem.assets/1609297218067.png)
+
+
+
+#### K8s ClusterIP Service - Iptables Mode
+
+![1609297282745](MicroserviceDistributedSystem.assets/1609297282745.png)
+
+
+
+#### K8s ClusterIP Service - IPVS Mode
+
+![1609297310205](MicroserviceDistributedSystem.assets/1609297310205.png)
+
+
+
+#### Istio Sidecar Proxy
+
+![1609297383134](MicroserviceDistributedSystem.assets/1609297383134.png)
+
+
+
+#### NodePort
+
+![1609297488537](MicroserviceDistributedSystem.assets/1609297488537.png)
+
+
+
+#### LoadBalancer
+
+![1609297564796](MicroserviceDistributedSystem.assets/1609297564796.png)
+
+
+
+#### K8s Ingress
+
+- 反向代理，路由功能
+
+![1609297615682](MicroserviceDistributedSystem.assets/1609297615682.png)
+
+
+
+####  LB + NodePort + Ingress
+
+![1609297670248](MicroserviceDistributedSystem.assets/1609297670248.png)
+
+
+
+#### 流量路径
+
+![1609297717917](MicroserviceDistributedSystem.assets/1609297717917.png)
+
+
+
+#### K8s Ingress 作为 API 网关
+
+![1609297775936](MicroserviceDistributedSystem.assets/1609297775936.png)
+
+
+
+#### Istio Gateway 作为 API 网关
+
+![1609297823239](MicroserviceDistributedSystem.assets/1609297823239.png)
+
+
+
+#### K8s Ingress vs lstio Gateway vs APl Gateway
+
+![1609297882601](MicroserviceDistributedSystem.assets/1609297882601.png)
+
+
+
+
+
+#### 综合方案
+
+- lstio Gateway 作为API 和业务的网关
+- APl Gateway 作为 API 的网关
+
+![1609297915261](MicroserviceDistributedSystem.assets/1609297915261.png)
+
+
+
+#### 参考
+
+- 如何为服务网格选择入口网关
+  - https://zhaohuabing.com/post/2019-03-29-how-to-choose-ingress-for-service-mesh/
+- Kubernetes 网络三部曲
+  - pod 网络：https://blog.csdn.net/yang75108/article/details/101101384
+  - Service 网络：https://blog.csdn.net/yang75108/article/details/101101384
+  - NodePort vs LoadBalancer vs Ingress：https://blog.csdn.net/yang75108/article/details/101101384
+  - https://www.bilibili.com/video/BV1Ft4y117Ch
+
+
+
+### Spring Cloud、K8s和Istio 该如何集成？
+
+#### 微服务公共关注点
+
+![1609298177591](MicroserviceDistributedSystem.assets/1609298177591.png)
+
+
+
+#### 服务化演进历史
+
+![1609298212229](MicroserviceDistributedSystem.assets/1609298212229.png)
+
+
+
+#### 比较
+
+![1609298248669](MicroserviceDistributedSystem.assets/1609298248669.png)
+
+
+
+#### 推荐选择
+
+![1609298267924](MicroserviceDistributedSystem.assets/1609298267924.png)
+
+
+
+#### 集成 K8s 的企业级微服务技术中台架构
+
+![1609298349433](MicroserviceDistributedSystem.assets/1609298349433.png)
 
 
 
