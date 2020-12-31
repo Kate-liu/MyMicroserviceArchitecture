@@ -4335,49 +4335,272 @@ stats_sinks:
 
 ## 架构师成长之道
 
+### 学习开源项目的6个层次和8种方法
+
+![1609384043346](MicroserviceDistributedSystem.assets/1609384043346.png)
+
+
+
+#### 方法1-简单看源码
+
+| 层次        | 一                                                           |
+| ----------- | ------------------------------------------------------------ |
+| 方法        | 简单看源码                                                   |
+| 说明        | 简单看源码、文档、跑跑样例代码                               |
+| 学习效果    | 1～ 2                                                        |
+| 有产出+闭环 | 否/尽量问题驱动                                              |
+| Get技能     | 源码阅读技能                                                 |
+| 案例        | 简单小项目，大部分新手开发者 举例，一致性Hash算法 <br />https://github.com/Jaskey/ConsistentHash |
+
+![1609384089034](MicroserviceDistributedSystem.assets/1609384089034.png)
+
+
+
+#### 方法2-整理源代码
+
+| 层次        | 二                                                           |
+| ----------- | ------------------------------------------------------------ |
+| 方法        | 整理源代码                                                   |
+| 说明        | 将所有源代码整理一遍，包括将包名都改掉，编译/测试/运行 通过  |
+| 学习效果    | 2～ 3                                                        |
+| 有产出+闭环 | 否(假定没有输出分享)                                         |
+| Get技能     | 细粒度源码阅读+调试                                          |
+| 案例        | 波波看源码习惯，案例spring-petclinic <br />https://github.com/spring-projects/spring-petclinic <br />https://github.com/spring2go/spring-petclinic-mono |
+
+
+
+#### 方法3-整理+输出分享
+
+| 层次        | 三                                                           |
+| ----------- | ------------------------------------------------------------ |
+| 方法        | 整理+输出分享                                                |
+| 说明        | 源码整理过，并且总结成源码分析或者架构设计文档/ppt，在公司或者社区 分享。 |
+| 学习效果    | 3~5                                                          |
+| 有产出+闭环 | 有价值输出+反馈                                              |
+| Get技能     | 技术/整理/输出/分享技能                                      |
+| 案例        | 波波看源码习惯，案例 Spring Petclinic <br />https://github.com/spring-petclinic/spring-petclinic-microservices <br />https://github.com/spring2go/spring-petclinic-msa <br />https://www.bilibili.com/video/BV1o5411x7ML <br />PPD 新手工程师每月源码解析文章 <br />https://techblog.ppdai.com/ |
+
+
+
+##### Youtube 案例1
+
+![1609384302097](MicroserviceDistributedSystem.assets/1609384302097.png)
+
+
+
+##### Youtube 案例2
+
+![1609384328421](MicroserviceDistributedSystem.assets/1609384328421.png)
 
 
 
 
 
+#### 方法4-开发克隆版
+
+| 层次        | 三                                                           |
+| ----------- | ------------------------------------------------------------ |
+| 方法        | 开发克隆版                                                   |
+| 说明        | 开发原项目的克隆版，类似翻译，比方说原项目用 Go 开发，我克隆成 Java 版，并开源分享到社区。 |
+| 学习效果    | 5~10                                                         |
+| 有产出+闭环 | 有价值输出+社区反馈                                          |
+| Get技能     | 深度源码阅读 技术/项目开发技能 Find high-quality projects on github |
+| 案例        | Staffjoy 项目 [Spring Boot 与 Kubernetes 云原生微服务实践] <br />https://github.com/Staffjoy/v2 https://github.com/spring2go/staffjoy <br />Kafka 克隆项目 <br />https://github.com/adyliu/jafka <br />https://github.com/travisjeffery/jocko <br />https://github.com/bulldog2011/luxun |
+
+
+
+#### 方法5-生产化落地
+
+| 层次        | 四                                                           |
+| ----------- | ------------------------------------------------------------ |
+| 方法        | 生产化落地                                                   |
+| 说明        | 源码经过整理输出，并且在公司生产级项目中落地，承担业务流量，并且根 据业务需要进行定制或者自研。 |
+| 学习效果    | >10                                                          |
+| 有产出+闭环 | 有价值输出+用户反馈+持续改进                                 |
+| Get技能     | 项目实战落地技能 企业级源码阅读和定制技能                    |
+| 案例        | 携程 Zuul 网关[微服务架构实战160讲] <br />https://github.com/spring2go/s2g-zuul <br />携程 Hystrix 限流熔断[微服务架构实战160讲] <br />https://github.com/ctripcorp/chystrix.net <br />拍拍贷 PMQ 消息系统[新课程第3章案例] <br />https://github.com/ppdaicorp/pmq <br />饿了么监控应用系统 <br />https://qcon.infoq.cn/2019/shanghai/presentation/1902 <br />https://myslide.cn/slides/21832 <br />https://github.com/lindb/lindb |
+
+
+
+#### 方法6-开发知识产品
+
+| 层次        | 四                                                           |
+| ----------- | ------------------------------------------------------------ |
+| 方法        | 开发知识产品                                                 |
+| 说明        | 将开源项目代码完全吸收，开发克隆项目/或开发开源应用演示项目，并制作 成知识付费产品（视频/书籍），发布到商业平台。 |
+| 学习效果    | >10                                                          |
+| 有产出+闭环 | 有产品输出+用户反馈+持续改进                                 |
+| Get技能     | 技术和项目开发技能 知识产品设计和开发技能 行业影响力         |
+| 案例        | Staffjoy 项目[Spring Boot 与 Kubernetes 云原生微服务实践] <br />https://github.com/spring2go/staffjoy <br />新峰商城 <br />https://github.com/newbee-ltd/newbee-mall <br />https://juejin.im/book/5da2f9d4f265da5b81794d48?referrer=59199e22a22b9d0058279886 <br />https://edu.csdn.net/course/play/26258/326466 |
+
+
+
+#### 方法7-开发自己的开源项目
+
+| 层次        | 五                                                           |
+| ----------- | ------------------------------------------------------------ |
+| 方法        | 开发自己的开源项目                                           |
+| 说明        | 在吸收开源项目+企业落地实践的基础上，沉淀出自己的开源项目，并持 续推动开源社区建设. |
+| 学习效果    | >10                                                          |
+| 有产出+闭环 | 有产品输出+社区反馈+持续改进                                 |
+| Get技能     | 技术和项目开发技能 行业影响力，跳槽最佳姿势 GitHub is your resume, let HR find you! 开源和社区运营技能 |
+| 案例        | Apollo [微服务架构实战160讲] <br />https://github.com/ctripcorp/apollo <br />Skywalking <br />https://github.com/apache/skywalking <br />https://wu-sheng.github.io/me/ <br />LinDB <br />https://github.com/lindb/lindb |
+
+
+
+#### 方法8-商业化自己的开源项目
+
+| 层次        | 六                                                           |
+| ----------- | ------------------------------------------------------------ |
+| 方法        | 商业化自己的开源项目                                         |
+| 说明        | 在自己的开源产品基础上，持续推进社区生态建设，并逐步走上商业化服务的道路。 |
+| 学习效果    | >100                                                         |
+| 有产出+闭环 | 完全和企业客户闭环                                           |
+| Get技能     | 产品化和商业化技能/社区生态建设技能/技术领导力+++            |
+| 案例        | TiDB（2018.9 C轮5000万美元） <br />https://github.com/pingcap/tidb<br />https://pingcap.com/en/ <br />Kafka（2019.1 D轮1.25亿美金，估值25亿美金） <br />https://github.com/apache/kafka <br />https://www.confluent.io/ <br />Sentry（2019.9 C轮4000万美金） <br />https://github.com/getsentry <br />https://sentry.io |
+
+![1609384831166](MicroserviceDistributedSystem.assets/1609384831166.png)
+
+
+
+#### 要点心得
+
+1.输入要有输出，学习要有产出。
+
+2.闭环反馈+持续改进，用户越多，反馈越多，学习效果越好。最好你的学习效果能够量化。
+
+3.如果你要真正理解某人/事物，那么就尝试改变他/她/它，学习开源项目也一样。
+
+4.一举多得，投入时间->有价值产出->个人沉淀积累->贡献社区->提升影响力->真正学到东西。
+
+
+
+#### 复利曲线
+
+- 学技术，学英语，做开源，做视频课程，都遵循这条复利曲线
+- 技术一般需要15年的时间，到拐点
+- 短视频，需要3-5年
+
+![1609385021078](MicroserviceDistributedSystem.assets/1609385021078.png)
+
+
+
+### 百万架构师是如何炼成的？
+
+#### 1 - 2 家规模化阶段的公司
+
+![1609385166647](MicroserviceDistributedSystem.assets/1609385166647.png)
+
+
+
+#### 3 - 5 个核心技术或者业务系统
+
+![1609385206552](MicroserviceDistributedSystem.assets/1609385206552.png)
+
+
+
+#### 至少 2 个业务或者技术领域经验
+
+- 经验可以做到互吃
+- 至少一个业务 + 一个技术
+
+![1609385266800](MicroserviceDistributedSystem.assets/1609385266800.png)
+
+
+
+#### 谋事在天，成事在人
+
+- 谋事在人，成事在天
+
+![1609385307329](MicroserviceDistributedSystem.assets/1609385307329.png)
 
 
 
 
 
+### 解读一份大厂的研发岗职级体系
+
+#### P1 - P3 - 培养层
+
+- 培养层
+
+![1609385369329](MicroserviceDistributedSystem.assets/1609385369329.png)
+
+![1609385389250](MicroserviceDistributedSystem.assets/1609385389250.png)
 
 
 
+#### P4 - P5 - 主力实施层
+
+- 主力实施层
+
+![1609385443899](MicroserviceDistributedSystem.assets/1609385443899.png)
+
+![1609385458047](MicroserviceDistributedSystem.assets/1609385458047.png)
 
 
 
+#### P6 - P7 - 主力交付层
+
+- 主力交付层
+
+![1609385490012](MicroserviceDistributedSystem.assets/1609385490012.png)
+
+![1609385503083](MicroserviceDistributedSystem.assets/1609385503083.png)
 
 
 
+#### P8 - P9  - 核心管理/ 总监层
+
+- 核心管理/ 总监层
+
+![1609385550527](MicroserviceDistributedSystem.assets/1609385550527.png)
+
+![1609385565302](MicroserviceDistributedSystem.assets/1609385565302.png)
 
 
 
+#### P10 - P12 - CTO 技术战略层
+
+- CTO 技术战略层
+
+![1609385598818](MicroserviceDistributedSystem.assets/1609385598818.png)
+
+![1609385612792](MicroserviceDistributedSystem.assets/1609385612792.png)
 
 
 
+### 结束语
+
+#### 回顾
+
+![1609385689576](MicroserviceDistributedSystem.assets/1609385689576.png)
 
 
 
+#### 分布式系统设计原则
+
+- 高可用、高性能、可扩展
+- 分布式系统第一原则～能不要分布尽量不要分布/最小可用架构
+- 尽可能无状态，其次集中状态，其次分布式最终一致，最终分布式强一致
+- 尽量异步
+- 测量反馈驱动（治理)
 
 
 
+#### 推荐书籍
 
+- 深入理解计算机系统
+- 代码大全
+- UML 和模式应用
+- 架构即未来
+- 分布式数据库
+  - 数据密集型应用系统设计
+  - 数据库系统内幕
 
+![1609385876956](MicroserviceDistributedSystem.assets/1609385876956.png)
 
-
-
-
-
-
-
-
-
-
+![1609385886028](MicroserviceDistributedSystem.assets/1609385886028.png)
 
 
 
