@@ -3731,6 +3731,634 @@ stats_sinks:
 
 ## 大型网站架构演进案例
 
+### 拍拍贷案例：大型网站架构是如何演进的？
+
+#### 从一个小网站开始
+
+- 拍拍贷参考了国外的 LendingClub
+- 主要模块：借入，借出，账户 等
+
+![1609377730506](MicroserviceDistributedSystem.assets/1609377730506.png)
+
+
+
+#### 2014年之前
+
+- 技术栈简单
+- 1 web + 1 DB
+- 自由发布
+- 用户就是测试人员
+
+![1609377790823](MicroserviceDistributedSystem.assets/1609377790823.png)
+
+
+
+#### 单体拆分
+
+- 流量/业务/团队开始增长
+- 一个单体工程，发布频率受限
+- 单体和团队规模矛盾
+- 牵一发而动全身
+- 业务交付缓慢
+
+![1609377855860](MicroserviceDistributedSystem.assets/1609377855860.png)
+
+
+
+#### 先拆应用
+
+- 根据不同功能，拆分出不同的模块
+- 一般先对数据表，进行垂直拆分
+
+![1609377917230](MicroserviceDistributedSystem.assets/1609377917230.png)
+
+
+
+#### 2014 - 2015 年
+
+![1609377942483](MicroserviceDistributedSystem.assets/1609377942483.png)
+
+
+
+
+
+#### 多应用的问题
+
+-  移动业务站 与 PC业务站 无法进行重用，业务逻辑不同
+
+![1609378025331](MicroserviceDistributedSystem.assets/1609378025331.png)
+
+
+
+
+
+#### 服务化 1.0
+
+- 基于.NET WCF
+- 开始了服务化初阶阶段
+- 仅是给其它应用提供服务
+- 逻辑同时存在于应用和服务中
+- WSDL服务应用方式调用
+- 应用逻辑和调用关系变得复杂
+
+![1609378098979](MicroserviceDistributedSystem.assets/1609378098979.png)
+
+
+
+#### 服务化 2.0
+
+- PPD 自研服务注册中心
+- 标准 REST 服务
+- 初步服务治理
+- 引入无线 API 网关（反向路由，容错限流）
+
+![1609378392774](MicroserviceDistributedSystem.assets/1609378392774.png)
+
+
+
+#### 服务监控演进
+
+- 自研 LogServer 
+- 使用 ELK
+- 最终使用 Elk+ CAT
+- cat：https://github.com/dianping/cat
+
+![1609378506325](MicroserviceDistributedSystem.assets/1609378506325.png)
+
+
+
+#### 2016年底
+
+- 多应用 -> 服务化
+- 服务治理 + 监控
+
+![1609378571585](MicroserviceDistributedSystem.assets/1609378571585.png)
+
+
+
+
+
+#### 2017中台化战略
+
+- 运维基础设施层
+- 技术中台
+- 业务中台
+- 前台业务应用层
+
+![1609378673168](MicroserviceDistributedSystem.assets/1609378673168.png)
+
+
+
+#### 4年的变化
+
+![1609378701159](MicroserviceDistributedSystem.assets/1609378701159.png)
+
+
+
+
+
+### 最小可用架构（Minimun Viable Architecture）
+
+#### 三个公司的架构演进
+
+- ebay
+- 携程
+- 拍拍贷
+
+![1609378820107](MicroserviceDistributedSystem.assets/1609378820107.png)
+
+
+
+#### 行业模式
+
+- 几乎没有公司一开始就搞微服务
+- 到达一定的规模，必然演进出微服务
+- 但是大部分公司（99%）都到不了那个规模
+
+
+
+#### S 曲线
+
+- [The S-Curve: How Businesses ACTUALLY Grow](https://ittybiz.com/s-curve/)：https://ittybiz.com/s-curve/
+
+![1609379016973](MicroserviceDistributedSystem.assets/1609379016973.png)
+
+
+
+#### 想法阶段
+
+![1609379118692](MicroserviceDistributedSystem.assets/1609379118692.png)
+
+
+
+##### 原型架构(Prototype Architecture)
+
+- 目标: 快速低成本探索业务域
+  - 找到业务模式
+  - 找到产品市场契合点(product market fit)
+  - 获取种子用户
+- 快速迭代
+  - 所有东西都是原型
+  - 原型都可被丢弃
+- 基本不需要技术
+  - 纸上的原型
+  - 谷歌广告
+  - Excel表格
+  - wordpress博客
+- 如果确实要搞点开发
+  - 简单熟悉的技术
+  - 简单拼凑即可
+
+![1609379261160](MicroserviceDistributedSystem.assets/1609379261160.png)
+
+
+
+#### 起步阶段
+
+![1609379309109](MicroserviceDistributedSystem.assets/1609379309109.png)
+
+
+
+##### 刚好够用的架构(Just Enough Architecture）
+
+- 目标: 以最低成本满足用户需求
+  - 让第一批种子用户满意
+  - 获取更多用户
+- 快速学习和改进
+- 提升团队生产力
+- 先不要考虑规模化!
+- 简单熟悉的技术
+  - 功能够且易于使用
+  - 快速开发框架（PHP/Django等）
+- 单体架构
+  - 单个应用
+  - 单个数据库
+- 不要自建基础设施
+  - 使用云服务/PaaS/Serverless
+
+
+
+##### 可牺牲的架构(Sacrifical Archetecture)
+
+- https://martinfowler.com/bliki/SacrificialArchitecture.html
+
+![1609379492801](MicroserviceDistributedSystem.assets/1609379492801.png)
+
+
+
+##### 单体架构的利弊
+
+![1609379657019](MicroserviceDistributedSystem.assets/1609379657019.png)
+
+
+
+
+
+##### 尽量不要造轮子
+
+- 使用云服务
+  - 比自己造轮子更快，更便宜，也更好用
+  - 像Netflix/StitchFix/WeWork这些互联网公司都没有自建的数据中心
+- 尽量使用开源
+  - 开源通常比商业软件要好用
+- 使用第三方SaaS服务
+  - 监控/告警
+  - 项目管理/缺陷跟踪
+  - 计费支付/欺诈检测
+  - 等等
+- 聚焦你的核心竞争
+  ·其它都用XAAS
+
+
+
+##### 起步阶段技术架构总结
+
+尽量组装，不要自研
+
+
+
+##### 提前为规模化做准备
+
+- 模块化原则
+  - 在单体中使用“共享库”
+  - 易于修改和模块化
+- 按应用垂直拆分
+- 详细记录日志和埋点
+  - 便于理解用户行为
+  - 便于问题定位和恢复
+  -  ELK/CAT
+
+
+
+##### 功能开关
+
+- 配置中心
+  - eBay/Facebook/Google/Netflix/阿里/携程，都演进出自己的产品
+  - Ctrip Apollo
+- 将功能交付和代码交付进行解耦
+  - 快速开启或关闭
+  - 在生产环境中快速校验功能
+  - 构建健壮+灵活的系统
+- 可针对特定用户群开启或关闭功能
+  - A|B测试
+  - 培养试验文化
+
+![1609380011490](MicroserviceDistributedSystem.assets/1609380011490.png)
+
+
+
+##### 持续交付CD
+
+- 低风险、push-button快速发布和回滚
+- 大部分应用可以每天发布多次
+- Docker/K8s
+
+![1609380081717](MicroserviceDistributedSystem.assets/1609380081717.png)
+
+
+
+#### 规模化阶段
+
+![1609380132734](MicroserviceDistributedSystem.assets/1609380132734.png)
+
+
+
+##### 什么时候考虑解耦拆分?
+
+- 速度信号
+  - 由于单体系统的耦合性和缺乏隔离性，交付速度受到影响
+  - 团队间相互依赖明显，无法独立开发和交付
+  - 新入职工程师要花很长时间才能上手交付
+- 扩展性信号
+  - 对单体的简单垂直扩展已经不起作用
+  - 业务要求对系统的某部分进行独立扩展
+- 发布信号
+  - 业务要求对单体系统的某部分进行独立的发布
+  - 但是单体发布很慢，很复杂，风险很高
+
+
+
+##### 可扩展的架构(Scalable Architecture)
+
+- 目标:技术架构要提前于业务的成长
+  - 同时保持站点稳定(keep the site up) !
+- 团队规模化
+- 技术规模化
+- 流程规模化
+
+
+
+##### 两个披萨团队
+
+![1609380310435](MicroserviceDistributedSystem.assets/1609380310435.png)
+
+
+
+##### 可扩展的架构
+
+- 可扩展的技术
+  - 转型到{Java, Go,Python }
+  - 优化延迟和性能
+- 可扩展的服务层
+  - 商品/订单/支付等
+  - 微服务架构
+- 可扩展的持久层
+  - 拆分单体数据库
+  - 隔离持久化
+- 专用系统
+  - 大数据分析/Al，搜索引擎，等等
+- 发布订阅事件系统
+  - 应用和服务之间通过事件进行通讯
+  - 事件驱动架构(EDA)
+
+
+
+##### 微服务架构的利弊
+
+![1609380425467](MicroserviceDistributedSystem.assets/1609380425467.png)
+
+
+
+##### 重构心态
+
+![1609380445764](MicroserviceDistributedSystem.assets/1609380445764.png)
+
+
+
+
+
+#### 优化阶段
+
+![1609380492699](MicroserviceDistributedSystem.assets/1609380492699.png)
+
+
+
+##### 稳定的架构
+
+- 目标：让一个系统更加高效 + 可持续
+- 持续增量地改善功能
+- 持续提升技术效能
+- 整合团队
+
+
+
+#### 加入时候的公司阶段
+
+- 规模化阶段
+
+![1609380610193](MicroserviceDistributedSystem.assets/1609380610193.png)
+
+
+
+#### 当前的公司阶段
+
+- 优化阶段
+
+![1609380673595](MicroserviceDistributedSystem.assets/1609380673595.png)
+
+
+
+#### 架构心态
+
+![1609380710765](MicroserviceDistributedSystem.assets/1609380710765.png)
+
+
+
+#### 参考
+
+- 最小可用架构
+  - https://www.youtube.com/watch?v=-GysBkOxQiA
+  - https://www.slideshare.net/RandyShoup/minimal-viable-architecture-silicon-slopes-2020
+
+
+
+### 如何构建基于 Oauth2/JWT的微服务架构
+
+#### ACME 电商平台架构
+
+![1609380931731](MicroserviceDistributedSystem.assets/1609380931731.png)
+
+
+
+#### 微服务分层架构
+
+##### Nginx 反向代理层
+
+- Nginx Ingress
+- envoy
+
+![1609381059627](MicroserviceDistributedSystem.assets/1609381059627.png)
+
+
+
+##### web 应用层
+
+- node js
+- spring mvc
+
+![1609381100823](MicroserviceDistributedSystem.assets/1609381100823.png)
+
+
+
+##### API 网关层
+
+- zuul
+
+![1609381148467](MicroserviceDistributedSystem.assets/1609381148467.png)
+
+
+
+##### IDP 服务
+
+- 独立部署，实现 OAuth 的鉴权
+
+![1609381233502](MicroserviceDistributedSystem.assets/1609381233502.png)
+
+
+
+##### BFF 服务
+
+- backend for frontend
+
+![1609381253707](MicroserviceDistributedSystem.assets/1609381253707.png)
+
+
+
+##### 领域服务层
+
+- 分别部署领域的服务，之间不相互依赖，每一个领域都作为一个独立发布的单元
+
+![1609381318673](MicroserviceDistributedSystem.assets/1609381318673.png)
+
+
+
+#### 集成场景
+
+##### 第一方 Web 应用 + 资源拥有者凭据模式
+
+- 认证授权流程
+
+![1609381434703](MicroserviceDistributedSystem.assets/1609381434703.png)
+
+- 服务调用流程
+
+![1609381497411](MicroserviceDistributedSystem.assets/1609381497411.png)
+
+
+
+##### 第一方移动应用 + 授权码许可模式
+
+- 认证授权流程
+
+![1609381546129](MicroserviceDistributedSystem.assets/1609381546129.png)
+
+
+
+##### 第三方 Web 应用 + 授权码模式
+
+- 认证授权流程
+
+![1609381595881](MicroserviceDistributedSystem.assets/1609381595881.png)
+
+
+
+##### 额外说明
+
+- IDP要支持从OAuth2令牌到JWT 令牌的互转
+- sso单点登录
+  - IDP提供集中登录页
+  - IDP要支持Web Session会话
+  - 粘性/客户端/集中式会话
+- IDP和网关的部署方式
+  - IDP在网关后
+  - IDP在网关前/Nginx后
+- 刷新令牌
+  - 根据企业安全需求启用
+  - 设置合理过期时间
+
+
+
+#### 参考
+
+- The Oauth 2.0 Authorization Framework
+  - https://tools.ietf.org/html/rfc6749
+- Micro-Services Architecture with OAuth2 & JWT
+  - https://www.kaper.com/cloud/micro-services-architecture-with-oauth2-and-jwt-part-1-overview/
+  - https://www.kaper.com/cloud/micro-services-architecture-with-oauth2-and-jwt-part-2-ateway/
+  - https://www.kaper.com/cloud/micro-services-architecture-with-oauth2-and-jwt-part-3-idp/
+- 什么是PKCE
+  - https://dzone.com/articles/what-is-pkce
+
+
+
+### 拍拍贷案例：如何实现机房的迁移？
+
+#### 拍拍贷机房迁移挑战（2017下半年）
+
+- 尽量不停机，进行机房迁移
+
+![1609382291613](MicroserviceDistributedSystem.assets/1609382291613.png)
+
+
+
+#### 通过波分光纤实现跨机房局域网
+
+- 波分光纤：https://carrier.huawei.com/cn/products/fixed-network/transmission/wdm-otn
+
+![1609382320337](MicroserviceDistributedSystem.assets/1609382320337.png)
+
+
+
+### 携程/Netflix 案例：如何实现同城双活和异地多活
+
+#### 携程准同城双活
+
+![1609382749127](MicroserviceDistributedSystem.assets/1609382749127.png)
+
+
+
+#### Netflix 同城三活高可用 + 混乱大猩猩
+
+- 混乱大猩猩，进行主动制造故障与混乱
+
+![1609382799451](MicroserviceDistributedSystem.assets/1609382799451.png)
+
+
+
+#### Netflix 异地多活高可用
+
+- 跨越多个Regin
+
+![1609382861771](MicroserviceDistributedSystem.assets/1609382861771.png)
+
+
+
+#### Eureka 服务发现高可用
+
+![1609382904278](MicroserviceDistributedSystem.assets/1609382904278.png)
+
+
+
+#### 缓存 EVCache 高可用
+
+- 使用 sidecar 边车 的方式部署到每一个 memcached 服务中
+
+![1609382961040](MicroserviceDistributedSystem.assets/1609382961040.png)
+
+
+
+#### Zuul 网关跨区域弹性路由
+
+- Zuul 可以判断本地的服务是否可用
+- 进行动态的切换路由访问，保证高可用
+
+![1609383028636](MicroserviceDistributedSystem.assets/1609383028636.png)
+
+
+
+#### 参考
+
+- High Availability Architecture and Netflixoss
+  - https://www.slideshare.net/adrianco/high-availability-architecture-and-netflixoss/38-Denominator_The_next_version_is
+- Active-Active for Multi-Regional Resiliency
+  - https://netflixtechblog.com/active-active-for-multi-regional-resiliency-c47719f6685b. 
+- Netflix Shares Cloud Load Balancing And Failover Tool: Eureka!
+  - https://netflixtechblog.com/netflix-shares-cloud-load-balancing-and-failover-tool-eureka-c10647ef95e5
+- Netflix EVcache Wiki
+  - https://github.com/Netflix/EVCache/wiki· 
+- Zuul @ Netflix
+  -  https://www.slideshare.net/MikeyCohen1/zuul-netflix-springone-platform
+
+
+
+
+
+## 架构师成长之道
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
